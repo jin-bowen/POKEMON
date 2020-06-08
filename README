@@ -1,0 +1,18 @@
+
+Overview
+--------
+pokemon is a structure based variance component test for studying rare variants
+
+Dependencies
+------------
+python > 3.6
+fastlmm
+pandas
+
+Installation
+------------
+git clone 
+
+Example:
+-----------------------
+python pokemon.py --gene_name ERBB3 --genotype test.vcf --cov_file test.cov --cov_list APOE4_dose,APOE2_dose --reference coords.tab
