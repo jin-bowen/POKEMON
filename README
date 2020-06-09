@@ -1,4 +1,3 @@
-
 #Overview
 --------
 pokemon is a structure based variance component test for studying rare variants
@@ -11,8 +10,9 @@ pandas
 
 #Installation
 ------------
-git clone 
+git clone https://github.com/jin-bowen/POKEMON.git
+cd POKEMON 
 
 #Example:
 -----------------------
-python pokemon.py --gene_name ERBB3 --genotype test.vcf --cov_file test.cov --cov_list APOE4_dose,APOE2_dose --reference snp_coords.tab
+python run_pokemon.py --gene_name ERBB3 --genotype test.vcf --cov_file test.cov --cov_list APOE4_dose,APOE2_dose --reference snp_coords.tab

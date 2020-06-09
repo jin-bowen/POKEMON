@@ -4,7 +4,7 @@ import numpy as np
 import scipy as sp
 import sys
 
-class SKAT:
+class VCT:
 	def process_covariates(self, fixed_covariates=None):
 		self.X = fixed_covariates
 

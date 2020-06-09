@@ -1,6 +1,6 @@
 from lib.process import *
 from lib.score import *
-from lib.skat import *
+from lib.VCT import *
 
 def main():
 
@@ -29,10 +29,11 @@ def main():
 	distance_mat = cal_distance_mat(snps2aa, freqs)
 
 	# generate the score matrix based on frequency and distance
-	freq, score, snp_score_mat = score_mat(freqs.values, distance_mat)
+	freq_w, struct_w, combined_w = \
+		sim_mat(freqs.values, distance_mat, alpha = 0.5, rho=0.5)
 	
 	# calculate kernel based on the score matrix
-	K = DenseKernel(snp_score_mat, genotype)
+	K = cal_Kernel(combined_w, genotype)
 
 	#determine if K is sparse or dense matrix
 	if sp.sparse.issparse(K): K = K.toarray()
@@ -43,7 +44,7 @@ def main():
 	        sys.stdout.write('%s\tNA'%pdbid+ '\n')
 	        return None
 
-	obj = SKAT(K, fixed_covariates=cov.values)
+	obj = VCT(K, fixed_covariates=cov.values)
 	pvals = obj.test(pheno.values, acc=1e-7)
 
 	record = [gene_name, str(pvals)]
