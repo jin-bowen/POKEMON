@@ -1,4 +1,3 @@
-#import MySQLdb, MySQLdb.cursors
 import dask.dataframe as dd
 import pandas as pd
 import numpy as np
@@ -93,27 +92,16 @@ def snps_to_aa(snps, gene_name, ref):
 	gene_ref['snp'] = None 
 
 	for i, isnp in enumerate(snps_modified):
-		bool_row = (gene_ref['chr']   == isnp[0]) & \
-			(gene_ref['start'].astype(int) <  int(isnp[1])) & \
-			(gene_ref['end'].astype(int)   >= int(isnp[1]))
-
+		bool_row = (gene_ref['chr'] == isnp[0]) & \
+			(gene_ref['start'].astype(int) == int(isnp[1])) 
 		gene_ref.loc[bool_row, 'snp'] = snps[i] 
 			
-	#filtered_row  = np.sum(filtered_rows, axis=0).astype(bool).tolist()
-	#snps_intersect = gene_ref[filtered_row].reset_index(drop=True)
 	snps_intersect = gene_ref.dropna()
 
-	cols = ['snp','structid','chain','chain_seqid','x','y','z']
+	cols = ['snp','structure','chain','structure_position','x','y','z']
 	return snps_intersect[cols].reset_index(drop=True)
 	
 def main():
-
-#	conn=MySQLdb.connect(
-#	host='biolync.case.edu',
-#	port=3306,
-#	user='bxj139',
-#	passwd='bushlab#227',
-#	db='pdbmap',)
 
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--gene_name", type=str,help="gene name(capitalized)")
