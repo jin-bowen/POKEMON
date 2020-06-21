@@ -2,8 +2,8 @@ from scipy.spatial.distance import pdist, squareform
 from scipy import sparse
 from scipy import stats
 
-#import pymol
-#from pymol import cmd
+import pymol
+from pymol import cmd
 
 import dask.dataframe as dd
 import numpy as np 
@@ -20,7 +20,6 @@ def generate_phenotype(genotype, snp_corr_es_df):
 
 	Returns: phenotype - list of phenotype for number_ind, 1D array of size number_ind
 	"""
-
 	snp_corr_es = snp_corr_es_df.values
 	sub_snps    = snp_corr_es_df.index.tolist()
 
@@ -149,74 +148,74 @@ def plot(var, pdb_id, chain=None):
 	cmd.color('white',pdb_id)
 
 	for i, row in var.iterrows():
-		resi  = row['seq']
+		resi  = row['structure_position']
 		chain = row['chain']
 		pheno = row['es']
 		cmd.alter('resi %s and chain %s'%(resi, chain), 'b=%s'%pheno)
-
-	cmd.spectrum("b", "blue_white_red", "%s"%pdb_id, maximum=1.0, minimum=0)
+	max_es = max(var['es'].values)
+	cmd.spectrum("b", "white_red", "%s"%pdb_id, maximum=max_es, minimum=0)
 	cmd.zoom()
 
 def main():
 
-	case_variant_file = sys.argv[1]	
-	ctrl_variant_file = sys.argv[2]	
+	case_var_file = sys.argv[1]	
+	ctrl_var_file = sys.argv[2]	
 	reference = sys.argv[3]
 
-	gene_name = case_variant_file.split('_')[0]
+	gene_name = case_var_file.split('_')[0]
 
 	cols=['chr','pos','if','ref','alt', 'qual', 'filter', 'info', 'format']
-	case_variant = pd.read_csv(case_variant_file, sep="\t", \
+	case_var = pd.read_csv(case_var_file, sep="\t", \
 			header=0, names=cols, usecols=list(range(9))) 
-	ctrl_variant = pd.read_csv(ctrl_variant_file, sep="\t", \
+	ctrl_var = pd.read_csv(ctrl_var_file, sep="\t", \
 			header=0, names=cols, usecols=list(range(9))) 
 
-	case_variant['snp'] = case_variant['chr'].astype(str) + ":" + \
-				case_variant['pos'].astype(str) + ":" + \
-				case_variant['ref'].astype(str) + ":" + \
-				case_variant['alt'].astype(str)
+	case_var['snp'] = case_var['chr'].astype(str) + ":" + \
+				case_var['pos'].astype(str) + ":" + \
+				case_var['ref'].astype(str) + ":" + \
+				case_var['alt'].astype(str)
 
-	ctrl_variant['snp'] = ctrl_variant['chr'].astype(str) + ":" + \
-				ctrl_variant['pos'].astype(str) + ":" + \
-				ctrl_variant['ref'].astype(str) + ":" + \
-				ctrl_variant['alt'].astype(str) 
+	ctrl_var['snp'] = ctrl_var['chr'].astype(str) + ":" + \
+				ctrl_var['pos'].astype(str) + ":" + \
+				ctrl_var['ref'].astype(str) + ":" + \
+				ctrl_var['alt'].astype(str) 
 
 
-	case_variant_es = pd.DataFrame(columns=['es'], index=case_variant['snp'].values)
-	case_variant_es['es'] = 0.03
-	ctrl_variant_es = pd.DataFrame(columns=['es'], index=ctrl_variant['snp'].values)
-	ctrl_variant_es['es'] = 0.00
+	case_var_es = pd.DataFrame(columns=['es'], index=case_var['snp'].values)
+	case_var_es['es'] = 0.01
+	
+	ctrl_var_es = pd.DataFrame(columns=['es'], index=ctrl_var['snp'].values)
+	ctrl_var_es['es'] = 0.00
 
 	num_ind = 2000
-	num_var = case_variant['snp'].values.shape[0] + ctrl_variant['snp'].values.shape[0]
-	var =  case_variant['snp'].tolist() + ctrl_variant['snp'].tolist()
+	num_var = case_var['snp'].values.shape[0] + ctrl_var['snp'].values.shape[0]
+	var =  case_var['snp'].tolist() + ctrl_var['snp'].tolist()
 	ind_genotype = np.random.randint(low=0, high=2, size=(num_ind, num_var))
 	ind_genotype_df = pd.DataFrame(ind_genotype, columns=var)
 
 	ref_raw = dd.read_csv(reference, sep="\t")
 	ref = ref_raw.groupby(['transcript'])
-	case_snp = case_variant['snp'].values
-	snps2aa = snps_to_aa(case_snp, gene_name, ref)
+	case_snp = case_var['snp'].values
+	case_snps2aa = snps_to_aa(case_snp, gene_name, ref)
+	snps2aa = snps_to_aa(var, gene_name, ref)
 
-	dist_mat_dict = cal_distance_mat(snps2aa)
+	dist_mat_dict = cal_distance_mat(case_snps2aa)
 
 	for pdb, dist_mat in dist_mat_dict.items():
-		case_variant_corr_es = exponential_es(case_variant_es, dist_mat, t=14)
+		case_var_corr_es = exponential_es(case_var_es, dist_mat, t=7)
 	
-		case_var_es = case_variant_corr_es.sum(axis=1).to_frame(name='es')
-			
-		phenotype = generate_phenotype(ind_genotype_df,case_variant_corr_es)
-		var = pd.concat([case_var_es, ctrl_variant_es])
+		case_var_es = case_var_corr_es.sum(axis=1).to_frame(name='es')
 
-		plot(var, pdb_id, chain=None)
+		print(case_var_corr_es)
+		print(case_var_es)
+					
+		phenotype = generate_phenotype(ind_genotype_df,case_var_corr_es)
+		var_es = pd.concat([case_var_es, ctrl_var_es])
+		pdb_snps2aa = snps2aa.loc[snps2aa['structure'] == pdb]
+		var_aa = pd.merge(var_es, pdb_snps2aa, left_index=True, right_on='snp')
+		plot(var_aa, pdb, chain=None)
 
 # main body
 if __name__ == "__main__":
 	main()
-
-
-
-
-
-
 
