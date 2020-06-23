@@ -183,15 +183,28 @@ def main():
 
 	case_var_es = pd.DataFrame(columns=['es'], index=case_var['snp'].values)
 	case_var_es['es'] = 0.01
+	case_var_es['freq'] = 0.01
 	
 	ctrl_var_es = pd.DataFrame(columns=['es'], index=ctrl_var['snp'].values)
 	ctrl_var_es['es'] = 0.00
+	ctrl_var_es['freq'] = 0.01
 
 	num_ind = 2000
 	num_var = case_var['snp'].values.shape[0] + ctrl_var['snp'].values.shape[0]
 	var =  case_var['snp'].tolist() + ctrl_var['snp'].tolist()
-	ind_genotype = np.random.randint(low=0, high=2, size=(num_ind, num_var))
+
+	var_freq = np.concatenate((case_var_es['freq'].values,  \
+		ctrl_var_es['freq'].values))
+
+	ind_genotype = np.zeros((num_ind, num_var))	
+	# generate genotype
+	for i, ifreq in enumerate(var_freq):
+		num_case = np.random.binomial(num_ind, ifreq)
+		case_id = np.random.choice(num_ind, num_case)
+		ind_genotype[ case_id, i] = 1
+	
 	ind_genotype_df = pd.DataFrame(ind_genotype, columns=var)
+	print(ind_genotype.sum(axis=0))
 
 	ref_raw = dd.read_csv(reference, sep="\t")
 	ref = ref_raw.groupby(['transcript'])
@@ -206,8 +219,6 @@ def main():
 	
 		case_var_es = case_var_corr_es.sum(axis=1).to_frame(name='es')
 
-		print(case_var_corr_es)
-		print(case_var_es)
 					
 		phenotype = generate_phenotype(ind_genotype_df,case_var_corr_es)
 		var_es = pd.concat([case_var_es, ctrl_var_es])
