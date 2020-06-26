@@ -155,6 +155,7 @@ def plot(var, pdb_id, chain=None):
 	max_es = max(var['es'].values)
 	cmd.spectrum("b", "white_red", "%s"%pdb_id, maximum=max_es, minimum=0)
 	cmd.zoom()
+	cmd.png('%s'%pdb_id)
 
 def main():
 
@@ -214,10 +215,10 @@ def main():
 	for pdb, dist_mat in dist_mat_dict.items():
 
 		var_corr_es = exponential_es(var_val, dist_mat, t=7)
-	
+		var_es = var_corr_es.sum(axis=1).to_frame(name='es')
 		phenotype = generate_phenotype(ind_genotype_df, var_corr_es)
 		pdb_snps2aa = snps2aa.loc[snps2aa['structure'] == pdb]
-		var_aa = pd.merge(var_val, pdb_snps2aa, left_index=True, right_on='snp')
+		var_aa = pd.merge(var_es, pdb_snps2aa, left_index=True, right_on='snp')
 		plot(var_aa, pdb, chain=None)
 
 # main body
