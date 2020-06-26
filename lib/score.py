@@ -126,7 +126,7 @@ def sim_mat(freqs, distance_mat, sim_fun='exponential', alpha = 0.5, rho=0.0):
 
 #######################################
 ### Construct non redundant distance matrix
-def cal_distance_mat(snps2aa, freqs):
+def cal_distance_mat(snps2aa_tot,freqs):
 	"""
 	Deal with situation when a single snp are mapped to more than two different residues 
 	  in a protein structure. Maintain the smallest pairwise distance
@@ -134,40 +134,47 @@ def cal_distance_mat(snps2aa, freqs):
 	Args:
 	snps2aa - a pandas dataframe with header:
 	  'snp','structid','chain','chain_seqid','x','y','z'
-	freqs - minor allele frequency vector, a 1D array of size (num of variants)
+	freqs 
 
 	Returns:
 	distance_mat - a matrix containing the minimum pairwise distance between snps
 	"""
-
-	snps = freqs.index.values
-	idx_tab = pd.DataFrame()
-	idx_tab['id'] = list(range(snps.shape[0]))
-	idx_tab['snp'] = snps
-
-	snps2aa_idx = pd.merge(snps2aa, idx_tab, on='snp')
-
-	snp_coord = snps2aa_idx[['x','y','z']].values
-	distance_vec = squareform(pdist(snp_coord)).flatten()
-
-	snp_idx = snps2aa_idx['id'].tolist()
-	snp_pair_idx = list(map(list, it.product(snp_idx, repeat=2)))
-
-	snp_pair_distance = pd.DataFrame(data=snp_pair_idx, columns=['i','j'], dtype=int)
-	snp_pair_distance['r'] = distance_vec
-
-	snp_pair_distance_uniq = snp_pair_distance.groupby(['i','j']).min().reset_index()
-
-	row  = snp_pair_distance_uniq['i'].values
-	col  = snp_pair_distance_uniq['j'].values
-	data = snp_pair_distance_uniq['r'].values
-
-	distance_mat = sparse.coo_matrix((data,(row,col))).toarray()
-
-	# check if the distance matrix if symmetrical	
-	#print((distance_mat.T == distance_mat).all())
 	
-	return distance_mat
+	snps = freqs.index.values
+	n_snp = snps.shape[0]
+
+	idx_tab = pd.DataFrame()
+	idx_tab['id'] = list(range(n_snp))
+	idx_tab['snp'] = snps
+	
+	snps2aa_tot_idx = pd.merge(snps2aa_tot, idx_tab, on='snp')
+	snps2aa_grp = snps2aa_tot_idx.groupby(['structure'])
+	dist_mat_dict = {}
+
+	for key, snps2aa in snps2aa_grp:
+
+		snp_coord = snps2aa[['x','y','z']].values
+		distance_vec = squareform(pdist(snp_coord)).flatten()
+	
+		snp_idx = snps2aa['id'].tolist()
+		snp_pair_idx = list(map(list, it.product(snp_idx, repeat=2)))
+	
+		snp_pair_distance = pd.DataFrame(data=snp_pair_idx, columns=['i','j'], dtype=int)
+		snp_pair_distance['r'] = distance_vec
+	
+		snp_pair_distance_uniq = snp_pair_distance.groupby(['i','j']).min().reset_index()
+	
+		row  = snp_pair_distance_uniq['i'].values
+		col  = snp_pair_distance_uniq['j'].values
+		data = snp_pair_distance_uniq['r'].values
+	
+		distance_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,n_snp)).toarray()
+
+		distance_mat[distance_mat == 0.0] = np.inf
+		dist_mat_dict[key] = distance_mat
+		# check if the distance matrix if symmetrical	
+		#print((distance_mat.T == distance_mat).all())
+	return dist_mat_dict
 
 def cal_Kernel(combined_w, genotype):
 	"""

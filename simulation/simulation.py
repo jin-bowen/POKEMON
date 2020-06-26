@@ -15,42 +15,38 @@ import sys
 
 def generate_phenotype(genotype, snp_corr_es_df):
 	"""
-
 	Args:
 
-	Returns: phenotype - list of phenotype for number_ind, 1D array of size number_ind
+	Returns:
 	"""
 	snp_corr_es = snp_corr_es_df.values
-	sub_snps    = snp_corr_es_df.index.tolist()
 
 	snp_es = np.sqrt(np.diagonal(snp_corr_es))	
 	np.fill_diagonal(snp_corr_es,0)
 
-	ind_genotype = genotype[sub_snps].values
-
+	ind_genotype = genotype.values
 	ind_log_odds =  np.dot(ind_genotype, snp_es)
 	
 	ind_ind_corr = np.linalg.multi_dot([ind_genotype, snp_corr_es, ind_genotype.T])
 	ind_log_odds += np.diagonal(ind_ind_corr)
-	ind_log_odds += 1
 
 	ind_prob = np.exp(ind_log_odds) / (1 + np.exp(ind_log_odds))
-
 	phenotype = list(map(lambda prob: np.random.binomial(1, p=prob), list(ind_prob)))
 
 	phenotype_df = pd.DataFrame(phenotype, columns=['phenotype'])
 
 	return phenotype_df
 
-def exponential_es(snp_es, dist_mat_df, t=14):
+def exponential_es(var_val, dist_mat_df, t=14):
 	"""
-
 	Args:
 
 	Returns:
 	"""
-	sub_snps = dist_mat_df.index.values
+	snps = var_val.index
 	dist_mat = dist_mat_df.values
+
+	#print(np.all(var_val.index == dist_mat_df.index))
 
 	num_row = dist_mat.shape[0]
 	num_col = dist_mat.shape[1]
@@ -63,15 +59,15 @@ def exponential_es(snp_es, dist_mat_df, t=14):
 		struct_w_list = list(map(lambda r: np.exp(-r * r/(2 * t * t)), dist_list))
 
 	struct_w = np.array(struct_w_list).reshape(num_row, num_col)
-	sub_snp_es = snp_es.loc[sub_snps].values
+	snp_es = var_val['es'].values
 
-	snp_snp_corr = np.dot(sub_snp_es, sub_snp_es.T)
-	sub_snp_es_combined = snp_snp_corr * struct_w
+	snp_corr = np.dot(snp_es, snp_es.T)
+	snp_es_combined = snp_corr * struct_w
 	
-	sub_snp_es_combined_df = pd.DataFrame(sub_snp_es_combined, \
-					index=sub_snps,\
-					columns=sub_snps)
-	return sub_snp_es_combined_df
+	snp_es_combined_df = pd.DataFrame(snp_es_combined, \
+					index=snps,\
+					columns=snps)
+	return snp_es_combined_df
 
 def snps_to_aa(snps, gene_name, ref):
 
@@ -96,23 +92,28 @@ def snps_to_aa(snps, gene_name, ref):
 	return snps_intersect[cols].drop_duplicates().reset_index(drop=True)
 
 #######################################
-def cal_distance_mat(snps2aa_tot):
+def cal_distance_mat(snps2aa_tot, freqs):
 	"""
 	Args:
-
+	
 	Returns:
-	"""
-
-	snps2aa_grp = snps2aa_tot.groupby(['structure'])
-
+	"""	
+	snps = freqs.index.values
+	n_snp = snps.shape[0]
+	
+	idx_tab = pd.DataFrame()
+	idx_tab['id'] = list(range(n_snp))
+	idx_tab['snp'] = snps
+	
+	snps2aa_tot_idx = pd.merge(snps2aa_tot, idx_tab, on='snp')
+	snps2aa_grp = snps2aa_tot_idx.groupby(['structure'])
 	dist_mat_dict = {}
+
 	for key, snps2aa in snps2aa_grp:
 
-		snps2aa['id'] = list(range(len(snps2aa)))
-	
 		snp_coord = snps2aa[['x','y','z']].values
 		distance_vec = squareform(pdist(snp_coord)).flatten()
-	
+
 		snp_idx = snps2aa['id'].tolist()
 		snp_pair_idx = list(map(list, it.product(snp_idx, repeat=2)))
 
@@ -125,11 +126,10 @@ def cal_distance_mat(snps2aa_tot):
 		col  = snp_pair_distance_uniq['j'].values
 		data = snp_pair_distance_uniq['r'].values
 	
-		distance_mat = sparse.coo_matrix((data,(row,col))).toarray()
-		distance_mat_df = pd.DataFrame(distance_mat, \
-					columns=snps2aa['snp'].values,\
-					index=snps2aa['snp'].values)	
-	
+		distance_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,n_snp)).toarray()
+		distance_mat[distance_mat == 0.0] = np.inf
+		distance_mat_df = pd.DataFrame(distance_mat,columns=snps,index=snps)
+
 		dist_mat_dict[key] = distance_mat_df
 		# check if the distance matrix if symmetrical	
 		#print((distance_mat.T == distance_mat).all())
@@ -180,50 +180,44 @@ def main():
 				ctrl_var['ref'].astype(str) + ":" + \
 				ctrl_var['alt'].astype(str) 
 
-
-	case_var_es = pd.DataFrame(columns=['es'], index=case_var['snp'].values)
-	case_var_es['es'] = 0.01
-	case_var_es['freq'] = 0.01
-	
-	ctrl_var_es = pd.DataFrame(columns=['es'], index=ctrl_var['snp'].values)
-	ctrl_var_es['es'] = 0.00
-	ctrl_var_es['freq'] = 0.01
+	case_var_val = pd.DataFrame(index=case_var['snp'].values)
+	case_var_val['es'] = 0.1
+	case_var_val['freq'] = 0.01
+	ctrl_var_val = pd.DataFrame(index=ctrl_var['snp'].values)
+	ctrl_var_val['es'] = 0.00
+	ctrl_var_val['freq'] = 0.01
+	var_val = pd.concat([case_var_val, ctrl_var_val])
 
 	num_ind = 2000
-	num_var = case_var['snp'].values.shape[0] + ctrl_var['snp'].values.shape[0]
-	var =  case_var['snp'].tolist() + ctrl_var['snp'].tolist()
+	num_var = var_val.shape[0]
 
-	var_freq = np.concatenate((case_var_es['freq'].values,  \
-		ctrl_var_es['freq'].values))
+	snp      =  var_val.index
+	var_es   = var_val['es'].values
+	var_freq = var_val['freq'].values
 
-	ind_genotype = np.zeros((num_ind, num_var))	
 	# generate genotype
+	ind_genotype = np.zeros((num_ind, num_var))	
+
 	for i, ifreq in enumerate(var_freq):
 		num_case = np.random.binomial(num_ind, ifreq)
 		case_id = np.random.choice(num_ind, num_case)
-		ind_genotype[ case_id, i] = 1
+		ind_genotype[case_id, i] = 1
 	
-	ind_genotype_df = pd.DataFrame(ind_genotype, columns=var)
-	print(ind_genotype.sum(axis=0))
+	ind_genotype_df = pd.DataFrame(ind_genotype, columns=snp)
 
+	# mapped snp
 	ref_raw = dd.read_csv(reference, sep="\t")
 	ref = ref_raw.groupby(['transcript'])
-	case_snp = case_var['snp'].values
-	case_snps2aa = snps_to_aa(case_snp, gene_name, ref)
-	snps2aa = snps_to_aa(var, gene_name, ref)
-
-	dist_mat_dict = cal_distance_mat(case_snps2aa)
-
-	for pdb, dist_mat in dist_mat_dict.items():
-		case_var_corr_es = exponential_es(case_var_es, dist_mat, t=7)
+	snps2aa = snps_to_aa(snp, gene_name, ref)
+	dist_mat_dict = cal_distance_mat(snps2aa, var_val)
 	
-		case_var_es = case_var_corr_es.sum(axis=1).to_frame(name='es')
+	for pdb, dist_mat in dist_mat_dict.items():
 
-					
-		phenotype = generate_phenotype(ind_genotype_df,case_var_corr_es)
-		var_es = pd.concat([case_var_es, ctrl_var_es])
+		var_corr_es = exponential_es(var_val, dist_mat, t=7)
+	
+		phenotype = generate_phenotype(ind_genotype_df, var_corr_es)
 		pdb_snps2aa = snps2aa.loc[snps2aa['structure'] == pdb]
-		var_aa = pd.merge(var_es, pdb_snps2aa, left_index=True, right_on='snp')
+		var_aa = pd.merge(var_val, pdb_snps2aa, left_index=True, right_on='snp')
 		plot(var_aa, pdb, chain=None)
 
 # main body

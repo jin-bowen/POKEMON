@@ -4,37 +4,27 @@ import numpy as np
 import pickle
 import argparse
 
-## function to match variant with amino acid  #
-#def snps_aa(snps, pdbid, conn):
-#
-#	## for individual variant record
-#	## match it with the structural information
-#	## default mode is 0
-#	rec = pd.DataFrame(columns=['gd_id','structid','chain','seq','x','y','z'])
-#	for snp in snps: 
-#		chrom = snp.split(':')[0]	
-#		pos   = snp.split(':')[1]	
-#
-#		cur=conn.cursor()
-#		## find match variant IndVar in genomicData table: gd_id
-#		## use gd_id to find corresponding structural information
-#		query  = "select gd.name, a.structid, a.chain, a.seqid, a.x, a.y, a.z "
-#		query += "from GenomicData gd "
-#		query += "inner join wes_missense_%s_pdb a "%chrom
-#		query += "on  gd.gd_id =  a.gd_id "	
-#		query += "where gd.chr   = 'chr%s' "%chrom 
-#		query += "and   gd.start = %s "%pos
-#		query += "and   gd.label = 'wes_missense_%s' "%chrom
-#		query += "and   a.structid = '%s'"%pdbid 
-#	
-#		dstream = cur.execute(query)
-#		## one variant can code into several different subnit
-#		temp = cur.fetchmany(dstream)
-#
-#		for line in temp: rec.loc[len(rec)] = list(line)
-#
-#	rec.set_index('gd_id', inplace=True)
-#	return rec
+def snps_to_aa(snps, gene_name, ref): 
+
+	try: 
+		gene_ref = ref.get_group(gene_name).compute()	
+	except: 
+		print("no coordinate information for input gene")
+		return 0
+
+	snps_modified = list(map(lambda x: ('chr' + x).split(':')[0:2], snps))
+
+	gene_ref['snp'] = None 
+
+	for i, isnp in enumerate(snps_modified):
+		bool_row = (gene_ref['chr'] == isnp[0]) & \
+			(gene_ref['start'].astype(int) == int(isnp[1])) 
+		gene_ref.loc[bool_row, 'snp'] = snps[i] 
+			
+	snps_intersect = gene_ref.dropna()
+
+	cols = ['snp','structure','chain','structure_position','x','y','z']
+	return snps_intersect[cols].drop_duplicates().reset_index(drop=True)
 
 def generate(gene_name,genetype,cov_file,cov_list,reference):
 
@@ -79,28 +69,6 @@ def generate(gene_name,genetype,cov_file,cov_list,reference):
 
 	return df_clean, freqs_clean, pheno, snps2aa, cov
 
-def snps_to_aa(snps, gene_name, ref): 
-
-	try: 
-		gene_ref = ref.get_group(gene_name).compute()	
-	except: 
-		print("no coordinate information for input gene")
-		return 0
-
-	snps_modified = list(map(lambda x: ('chr' + x).split(':')[0:2], snps))
-
-	gene_ref['snp'] = None 
-
-	for i, isnp in enumerate(snps_modified):
-		bool_row = (gene_ref['chr'] == isnp[0]) & \
-			(gene_ref['start'].astype(int) == int(isnp[1])) 
-		gene_ref.loc[bool_row, 'snp'] = snps[i] 
-			
-	snps_intersect = gene_ref.dropna()
-
-	cols = ['snp','structure','chain','structure_position','x','y','z']
-	return snps_intersect[cols].reset_index(drop=True)
-	
 def main():
 
 	parser = argparse.ArgumentParser()
