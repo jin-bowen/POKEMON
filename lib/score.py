@@ -116,13 +116,16 @@ def sim_mat(freqs, distance_mat, sim_fun='exponential', alpha = 0.5, rho=0.0):
 	elif sim_fun == 'bounded': struct_w = bounded(distance_mat) 
 
 	# combine two weights kernel with a parameter alpha
-	freq_struct_w = (alpha * freq_w)
-	freq_struct_w += (1 - alpha) * struct_w
+	freq_norm = np.diagonal(freq_w).max()
+	freq_struct_w = alpha * freq_w / freq_norm
+
+	struct_norm = np.max(struct_w)
+	freq_struct_w += (1.0 - alpha) * struct_w / struct_norm 
 
 	# normalize score matrix
-	norm = np.diagonal(freq_struct_w).max()
+	#norm = np.diagonal(freq_struct_w).max()
 
-	return freq_w, struct_w, freq_struct_w * 1.0/norm
+	return freq_w, struct_w, freq_struct_w 
 
 #######################################
 ### Construct non redundant distance matrix
@@ -145,9 +148,9 @@ def cal_distance_mat(snps2aa_tot,freqs):
 
 	idx_tab = pd.DataFrame()
 	idx_tab['id'] = list(range(n_snp))
-	idx_tab['snp'] = snps
+	idx_tab['varcode'] = snps
 	
-	snps2aa_tot_idx = pd.merge(snps2aa_tot, idx_tab, on='snp')
+	snps2aa_tot_idx = pd.merge(snps2aa_tot, idx_tab, on='varcode')
 	snps2aa_grp = snps2aa_tot_idx.groupby(['structure'])
 	dist_mat_dict = {}
 
@@ -166,12 +169,12 @@ def cal_distance_mat(snps2aa_tot,freqs):
 	
 		row  = snp_pair_distance_uniq['i'].values
 		col  = snp_pair_distance_uniq['j'].values
-		data = snp_pair_distance_uniq['r'].values
+		data = snp_pair_distance_uniq['r'].values + 1.0
 	
 		distance_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,n_snp)).toarray()
 
 		distance_mat[distance_mat == 0.0] = np.inf
-		dist_mat_dict[key] = distance_mat
+		dist_mat_dict[key] = distance_mat - 1.0
 		# check if the distance matrix if symmetrical	
 		#print((distance_mat.T == distance_mat).all())
 	return dist_mat_dict

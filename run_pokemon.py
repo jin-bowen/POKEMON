@@ -10,8 +10,8 @@ def main():
 	parser.add_argument("--cov_file", type=str,help="cov_file file in plink format")
 	parser.add_argument("--cov_list", type=str,help="individual cov_file name, seperated by comma")
 
-	parser.add_argument("--reference", type=str,help="snp to AA mapping reference")
-	#parser.add_argument("--out_dir", type=str,help="output path for pickle file")
+	parser.add_argument("--ref_mapping", type=str,help="snp to AA mapping reference")
+	parser.add_argument("--ref_pdb", type=str,help="AA coordinate reference")
 
 	args = parser.parse_args()
 
@@ -19,11 +19,12 @@ def main():
 	genetype  = args.genotype
 	cov_file  = args.cov_file
 	cov_list  = args.cov_list.split(',')
-	reference = args.reference
+	ref_mapping = args.ref_mapping
+	ref_pdb = args.ref_pdb
 
 	# generate input file
 	genotype,freqs,pheno,snps2aa,cov = \
-		generate(gene_name,genetype,cov_file,cov_list,reference)
+		generate(gene_name,genetype,cov_file,cov_list,ref_mapping,ref_pdb)
 	
 	# get distance matrix
 	dist_mat_dict = cal_distance_mat(snps2aa, freqs)

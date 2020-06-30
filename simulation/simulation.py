@@ -2,8 +2,8 @@ from scipy.spatial.distance import pdist, squareform
 from scipy import sparse
 from scipy import stats
 
-import pymol
-from pymol import cmd
+#import pymol
+#from pymol import cmd
 
 import dask.dataframe as dd
 import numpy as np 
@@ -13,22 +13,25 @@ import pickle
 import math
 import sys
 
-def generate_phenotype(genotype, snp_corr_es_df):
+def generate_phenotype(genotype, snp_corr_es_df, snp_es, base_line_prev):
 	"""
 	Args:
 
 	Returns:
 	"""
-	snp_corr_es = snp_corr_es_df.values
 
-	snp_es = np.sqrt(np.diagonal(snp_corr_es))	
-	np.fill_diagonal(snp_corr_es,0)
+	base_beta = np.log(base_line_prev/(1.0-base_line_prev))
 
 	ind_genotype = genotype.values
+
+	snp_corr_es  =  snp_corr_es_df.values
 	ind_log_odds =  np.dot(ind_genotype, snp_es)
-	
 	ind_ind_corr = np.linalg.multi_dot([ind_genotype, snp_corr_es, ind_genotype.T])
-	ind_log_odds += np.diagonal(ind_ind_corr)
+
+	ind_corr = np.diagonal(ind_ind_corr)
+	
+	ind_log_odds += 0.5 * ind_corr
+	ind_log_odds += base_beta
 
 	ind_prob = np.exp(ind_log_odds) / (1 + np.exp(ind_log_odds))
 	phenotype = list(map(lambda prob: np.random.binomial(1, p=prob), list(ind_prob)))
@@ -37,7 +40,7 @@ def generate_phenotype(genotype, snp_corr_es_df):
 
 	return phenotype_df
 
-def exponential_es(var_val, dist_mat_df, t=14):
+def exponential_es(var_val, dist_mat_df, t=7):
 	"""
 	Args:
 
@@ -59,14 +62,14 @@ def exponential_es(var_val, dist_mat_df, t=14):
 		struct_w_list = list(map(lambda r: np.exp(-r * r/(2 * t * t)), dist_list))
 
 	struct_w = np.array(struct_w_list).reshape(num_row, num_col)
-	snp_es = var_val['es'].values
+	snp_es = var_val['es'].values.reshape((-1,1))
 
 	snp_corr = np.dot(snp_es, snp_es.T)
 	snp_es_combined = snp_corr * struct_w
-	
+
 	snp_es_combined_df = pd.DataFrame(snp_es_combined, \
-					index=snps,\
-					columns=snps)
+			index=snps,\
+			columns=snps)
 	return snp_es_combined_df
 
 def snps_to_aa(snps, gene_name, ref):
@@ -104,7 +107,7 @@ def cal_distance_mat(snps2aa_tot, freqs):
 	idx_tab = pd.DataFrame()
 	idx_tab['id'] = list(range(n_snp))
 	idx_tab['snp'] = snps
-	
+
 	snps2aa_tot_idx = pd.merge(snps2aa_tot, idx_tab, on='snp')
 	snps2aa_grp = snps2aa_tot_idx.groupby(['structure'])
 	dist_mat_dict = {}
@@ -146,15 +149,17 @@ def plot(var, pdb_id, chain=None):
 	cmd.alter(pdb_id, 'b = 0.5')
 	cmd.show_as('cartoon',pdb_id)
 	cmd.color('white',pdb_id)
+	max_es = max(var['es'].values)
 
 	for i, row in var.iterrows():
 		resi  = row['structure_position']
 		chain = row['chain']
-		pheno = row['es']
+		pheno = row['es'] / max_es
 		cmd.alter('resi %s and chain %s'%(resi, chain), 'b=%s'%pheno)
-	max_es = max(var['es'].values)
-	cmd.spectrum("b", "white_red", "%s"%pdb_id, maximum=max_es, minimum=0)
+
+	cmd.spectrum("b", "white_red", "%s"%pdb_id, maximum=1.0, minimum=0.0)
 	cmd.zoom()
+	cmd.png('%s'%pdb_id)
 
 def main():
 
@@ -162,6 +167,7 @@ def main():
 	ctrl_var_file = sys.argv[2]	
 	reference = sys.argv[3]
 
+	base_line_prev = 0.05
 	gene_name = case_var_file.split('_')[0]
 
 	cols=['chr','pos','if','ref','alt', 'qual', 'filter', 'info', 'format']
@@ -182,13 +188,14 @@ def main():
 
 	case_var_val = pd.DataFrame(index=case_var['snp'].values)
 	case_var_val['es'] = 0.1
+	#case_var_val.loc['5:149435612:A:G','es']=1
 	case_var_val['freq'] = 0.01
 	ctrl_var_val = pd.DataFrame(index=ctrl_var['snp'].values)
-	ctrl_var_val['es'] = 0.00
+	ctrl_var_val['es'] = 0.0
 	ctrl_var_val['freq'] = 0.01
 	var_val = pd.concat([case_var_val, ctrl_var_val])
 
-	num_ind = 2000
+	num_ind = 40000
 	num_var = var_val.shape[0]
 
 	snp      =  var_val.index
@@ -213,12 +220,26 @@ def main():
 	
 	for pdb, dist_mat in dist_mat_dict.items():
 
-		var_corr_es = exponential_es(var_val, dist_mat, t=7)
-	
-		phenotype = generate_phenotype(ind_genotype_df, var_corr_es)
+		var_corr_es_df = exponential_es(var_val, dist_mat)
+		phenotype = generate_phenotype(ind_genotype_df, var_corr_es_df, var_es, base_line_prev)
+
+		# plot effect size
 		pdb_snps2aa = snps2aa.loc[snps2aa['structure'] == pdb]
-		var_aa = pd.merge(var_val, pdb_snps2aa, left_index=True, right_on='snp')
-		plot(var_aa, pdb, chain=None)
+
+		var_es_w_corr = var_corr_es_df.sum(axis=1).to_frame(name='es')
+		var_es_w_corr['es'] = var_es_w_corr['es'] + var_es
+		var_es_w_corr['ori_es'] = var_es
+		var_aa = pd.merge(var_es_w_corr, pdb_snps2aa, left_index=True, right_on='snp')
+
+		# save simulation file
+		obj = open('%s_%s.pkl'%(pdb,str(num_ind)),'wb')
+		pickle.dump(ind_genotype_df, obj)
+		pickle.dump(phenotype,   obj)
+		pickle.dump(snps2aa, obj)
+		pickle.dump(var_es_w_corr, obj)
+		obj.close()
+
+		#plot(var_aa, pdb, chain=None)
 
 # main body
 if __name__ == "__main__":

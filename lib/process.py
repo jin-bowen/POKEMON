@@ -4,29 +4,35 @@ import numpy as np
 import pickle
 import argparse
 
-def snps_to_aa(snps, gene_name, ref): 
+def snps_to_aa(snps,gene_name,ref_mapping,ref_pdb): 
 
-	try: 
-		gene_ref = ref.get_group(gene_name).compute()	
+	ref_mapping_grp = ref_mapping.groupby('transcript')
+	ref_pdb_grp = ref_pdb.groupby('structure')
+
+	print(ref_pdb_grp.get_group('2fp0').compute())
+
+	try: gene_ref_mapping = ref_mapping_grp.get_group(gene_name)
 	except: 
 		print("no coordinate information for input gene")
 		return 0
+	snp_ref_mapping = gene_ref_mapping.loc[gene_ref_mapping['varcode'].isin(snps)]
 
-	snps_modified = list(map(lambda x: ('chr' + x).split(':')[0:2], snps))
+	keys = snp_ref_mapping['structure'].unique().compute().tolist()
 
-	gene_ref['snp'] = None 
+	fst_key = keys.pop(0)
+	sub_ref_pdb = ref_pdb_grp.get_group(fst_key)
+	for key in keys:
+		temp = ref_pdb_grp.get_group(key)
+		sub_ref_pdb = sub_ref_pdb.append(temp)
 
-	for i, isnp in enumerate(snps_modified):
-		bool_row = (gene_ref['chr'] == isnp[0]) & \
-			(gene_ref['start'].astype(int) == int(isnp[1])) 
-		gene_ref.loc[bool_row, 'snp'] = snps[i] 
-			
-	snps_intersect = gene_ref.dropna()
+	mapped_record = dd.merge(sub_ref_pdb, snp_ref_mapping, \
+		on=['structure','chain','structure_position'], how='inner')
 
-	cols = ['snp','structure','chain','structure_position','x','y','z']
-	return snps_intersect[cols].drop_duplicates().reset_index(drop=True)
+	cols = ['varcode','structure','chain','structure_position','x','y','z']
+	out_df = mapped_record[cols].compute()
+	return	out_df.drop_duplicates().reset_index(drop=True)
 
-def generate(gene_name,genetype,cov_file,cov_list,reference):
+def generate(gene_name,genetype,cov_file,cov_list,ref_mapping,ref_pdb):
 
 	df_raw=pd.read_csv(genetype, sep=' ')
 	df_raw.set_index( 'IID', inplace=True)
@@ -35,14 +41,14 @@ def generate(gene_name,genetype,cov_file,cov_list,reference):
 	cov_raw = pd.read_csv(cov_file, sep=' ')
 	cov_raw.set_index( 'IID', inplace=True)
 
-	ref_raw = dd.read_csv(reference, sep="\t")
-	ref = ref_raw.groupby(['gene'])
+	ref_mapping = dd.read_csv(ref_mapping, sep="\t", dtype=str)
+	ref_pdb = dd.read_csv(ref_pdb, dtype=str, usecols=list(range(12)))
 
 	# filter individual that carries at least one variant
 	filtered_ind = list(map(lambda line: np.sum(line) > 0, df_raw.iloc[:,5:].values))	
 	df    = df_raw.iloc[ filtered_ind,5:]
 	pheno = df_raw.loc[ filtered_ind,'PHENOTYPE']
-	# accomoddate plink phenotype: 1 for control and 2 for case
+	# accomodate plink phenotype: 1 for control and 2 for case
 	pheno = pheno - 1
 
 	# change plink style 12:56477541:C:T_T  to 12:56477541:C:T 
@@ -60,10 +66,10 @@ def generate(gene_name,genetype,cov_file,cov_list,reference):
 	df_filtered    = df.loc[:,freqs_filtered.index.values]	
 
 	snps  = df_filtered.columns.tolist()
-	snps2aa = snps_to_aa(snps, gene_name, ref)
+	snps2aa = snps_to_aa(snps, gene_name, ref_mapping, ref_pdb)
 	
 	## filter snps with mapped coordinates
-	snps_mapped = snps2aa['snp'].values
+	snps_mapped = snps2aa['varcode'].values
 	df_clean = df_filtered.loc[:,snps_mapped]
 	freqs_clean = freqs_filtered.loc[snps_mapped]
 
