@@ -23,23 +23,28 @@ def main():
 	case_ind = case_df.index.tolist()
 	ctrl_ind = ctrl_df.index.tolist()
 	tot_ind  = case_ind + ctrl_ind
-	
+
+	## filter snps with mapped coordinates
+	snps_mapped = snps2aa_df['varcode'].values
 	phenotype = phenotype_df.loc[tot_ind]
-	genotype  = genotype_df.loc[tot_ind]
+	genotype  = genotype_df.loc[tot_ind, snps_mapped]
+
+	print(var_es_df.loc[snps_mapped].sort_values(by=['es']))
+
+	phenotype.to_csv('phenotype')
+	genotype.to_csv('genotype')
 
 	phenotype_val = phenotype.values.flatten()	
 	genotype_val = genotype.values
+	freqs = genotype.sum(axis=0)/len(tot_ind)
 
 	clf = sm.Logit(phenotype_val, genotype_val)
 	clf_es = clf.fit()
 
 	#print(np.all(genotype.index == phenotype.index))
-	var_es_df['lr_coef'] = clf_es.params
-	
+	var_es_df.loc[ snps_mapped, 'lr_coef'] = clf_es.params
 	filename=pdb_combo_file.split('.')[0]
-	var_es_df.to_csv( filename+'.csv')
-	
-	freqs = genotype.sum(axis=0)/len(tot_ind)
+	var_es_df.to_csv( filename + '.csv')
 	
 	# get distance matrix
 	dist_mat_dict = cal_distance_mat(snps2aa_df, freqs)
@@ -51,7 +56,6 @@ def main():
 		
 		# calculate kernel based on the score matrix
 		K = cal_Kernel(combined_w, genotype)
-		
 		#determine if K is sparse or dense matrix
 		if sp.sparse.issparse(K): K = K.toarray()
 

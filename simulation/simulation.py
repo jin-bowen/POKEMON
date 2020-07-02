@@ -82,16 +82,16 @@ def snps_to_aa(snps, gene_name, ref):
 
 	snps_modified = list(map(lambda x: ('chr' + x).split(':')[0:2], snps))
 
-	gene_ref['snp'] = None
+	gene_ref['varcode'] = None
 
 	for i, isnp in enumerate(snps_modified):
 		bool_row = (gene_ref['chr'] == isnp[0]) & \
 			(gene_ref['start'].astype(int) == int(isnp[1]))
-		gene_ref.loc[bool_row, 'snp'] = snps[i]
+		gene_ref.loc[bool_row, 'varcode'] = snps[i]
 
 	snps_intersect = gene_ref.dropna()
 
-	cols = ['snp','structure','chain','structure_position','x','y','z']
+	cols = ['varcode','structure','chain','structure_position','x','y','z']
 	return snps_intersect[cols].drop_duplicates().reset_index(drop=True)
 
 #######################################
@@ -106,9 +106,9 @@ def cal_distance_mat(snps2aa_tot, freqs):
 	
 	idx_tab = pd.DataFrame()
 	idx_tab['id'] = list(range(n_snp))
-	idx_tab['snp'] = snps
+	idx_tab['varcode'] = snps
 
-	snps2aa_tot_idx = pd.merge(snps2aa_tot, idx_tab, on='snp')
+	snps2aa_tot_idx = pd.merge(snps2aa_tot, idx_tab, on='varcode')
 	snps2aa_grp = snps2aa_tot_idx.groupby(['structure'])
 	dist_mat_dict = {}
 
@@ -127,13 +127,13 @@ def cal_distance_mat(snps2aa_tot, freqs):
 	
 		row  = snp_pair_distance_uniq['i'].values
 		col  = snp_pair_distance_uniq['j'].values
-		data = snp_pair_distance_uniq['r'].values
+		data = snp_pair_distance_uniq['r'].values + 1.0
 	
 		distance_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,n_snp)).toarray()
 		distance_mat[distance_mat == 0.0] = np.inf
 		distance_mat_df = pd.DataFrame(distance_mat,columns=snps,index=snps)
 
-		dist_mat_dict[key] = distance_mat_df
+		dist_mat_dict[key] = distance_mat_df - 1.0
 		# check if the distance matrix if symmetrical	
 		#print((distance_mat.T == distance_mat).all())
 	return dist_mat_dict
@@ -176,21 +176,21 @@ def main():
 	ctrl_var = pd.read_csv(ctrl_var_file, sep="\t", \
 			header=0, names=cols, usecols=list(range(9))) 
 
-	case_var['snp'] = case_var['chr'].astype(str) + ":" + \
+	case_var['varcode'] = case_var['chr'].astype(str) + ":" + \
 				case_var['pos'].astype(str) + ":" + \
 				case_var['ref'].astype(str) + ":" + \
 				case_var['alt'].astype(str)
 
-	ctrl_var['snp'] = ctrl_var['chr'].astype(str) + ":" + \
+	ctrl_var['varcode'] = ctrl_var['chr'].astype(str) + ":" + \
 				ctrl_var['pos'].astype(str) + ":" + \
 				ctrl_var['ref'].astype(str) + ":" + \
 				ctrl_var['alt'].astype(str) 
 
-	case_var_val = pd.DataFrame(index=case_var['snp'].values)
+	case_var_val = pd.DataFrame(index=case_var['varcode'].values)
 	case_var_val['es'] = 0.1
 	#case_var_val.loc['5:149435612:A:G','es']=1
 	case_var_val['freq'] = 0.01
-	ctrl_var_val = pd.DataFrame(index=ctrl_var['snp'].values)
+	ctrl_var_val = pd.DataFrame(index=ctrl_var['varcode'].values)
 	ctrl_var_val['es'] = 0.0
 	ctrl_var_val['freq'] = 0.01
 	var_val = pd.concat([case_var_val, ctrl_var_val])
@@ -229,7 +229,7 @@ def main():
 		var_es_w_corr = var_corr_es_df.sum(axis=1).to_frame(name='es')
 		var_es_w_corr['es'] = var_es_w_corr['es'] + var_es
 		var_es_w_corr['ori_es'] = var_es
-		var_aa = pd.merge(var_es_w_corr, pdb_snps2aa, left_index=True, right_on='snp')
+		var_aa = pd.merge(var_es_w_corr, pdb_snps2aa, left_index=True, right_on='varcode')
 
 		# save simulation file
 		obj = open('%s_%s.pkl'%(pdb,str(num_ind)),'wb')
