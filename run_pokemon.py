@@ -63,13 +63,13 @@ def main():
 		if args.cov_file:	
 			obj = VCT(K, fixed_covariates=cov.values)
 		else: obj = VCT(K)
-		pval = obj.test(pheno.values, acc=1e-7)	
+		pval = obj.test(pheno.values, acc=1e-4)	
 		if empirical:
 			N = np.ceil(1/p).astype(int)
 			pvals_w_shuffle = np.zeros(N)
 			for i in range(N):
 				np.random.shuffle(phenotype_val)
-				pval_shuffle = obj.test(phenotype_val, acc=1e-7)
+				pval_shuffle = obj.test(phenotype_val, acc=1e-4)
 				pvals_w_shuffle[i] = pval_shuffle
 			pvals_bool = pvals_w_shuffle < pval
 			S = np.sum(pvals_w_shuffle < pval)
