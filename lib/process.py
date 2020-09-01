@@ -31,7 +31,7 @@ def snps_to_aa(snps,gene_name,ref_mapping,ref_pdb_dir):
 
 	ref_pdb_dd = dd.from_pandas(ref_pdb, npartitions=3)
 	mapped_record = dd.merge(ref_pdb_dd, snp_ref_mapping, \
-			on=['structure','chain','structure_position'], how='inner')
+		on=['structure','chain','structure_position'], how='inner')
 
 	out_df = mapped_record[cols].compute()
 	return	out_df.drop_duplicates().reset_index(drop=True)
@@ -39,46 +39,52 @@ def snps_to_aa(snps,gene_name,ref_mapping,ref_pdb_dir):
 def generate(gene_name,genetype,cov_file,cov_list,ref_mapping,ref_pdb_dir):
 
 	df_raw=pd.read_csv(genetype, sep=' ')
-	df_raw.set_index( 'IID', inplace=True)
+	df_raw.set_index('IID', inplace=True)
 	df_raw.fillna(0, inplace=True)
 
-	cov_raw = pd.read_csv(cov_file, sep=' ')
-	cov_raw.set_index( 'IID', inplace=True)
+	if cov_file:
+		cov_raw = pd.read_csv(cov_file, sep=' ')
+		cov_raw.set_index('IID', inplace=True)
+	else: 
+		cov_raw = None
+		cov     = None
 
-	ref_mapping = dd.read_csv(ref_mapping, sep="\t", dtype=str)
-	
 	# filter individual that carries at least one variant
 	filtered_ind = list(map(lambda line: np.sum(line) > 0, df_raw.iloc[:,5:].values))	
-
-	df    = df_raw.iloc[ filtered_ind,5:]
-	pheno = df_raw.loc[ filtered_ind,'PHENOTYPE']
+	ref_mapping = dd.read_csv(ref_mapping, sep="\t", dtype=str)
 	
+	df    = df_raw.iloc[filtered_ind,5:]
+	pheno = df_raw.loc[filtered_ind,'PHENOTYPE']
+	if cov_file:
+		cov = cov_raw.loc[filtered_ind,cov_list]
+
 	# accomodate plink phenotype: 1 for control and 2 for case
 	pheno = pheno - 1
 
 	# change plink style 12:56477541:C:T_T  to 12:56477541:C:T 
-	df_rename = map(lambda s: s[:-2], df.columns.values)
+	df_rename   = list(map(lambda s: s[:-2], df.columns.values))
 	df.columns  = df_rename
 
-	cov = cov_raw.loc[filtered_ind,cov_list]
-	
-	## calculate freq
-	freqs = df.sum(axis=0) 
-	freqs = freqs / df_raw.shape[0]
-
-	## filter snps with freqs > 0.0
-	freqs_filtered = freqs[freqs > 0.0]
-	df_filtered    = df.loc[:,freqs_filtered.index.values]	
-
-	snps  = df_filtered.columns.tolist()
+	snps    = df.columns.tolist()
 	snps2aa = snps_to_aa(snps, gene_name, ref_mapping, ref_pdb_dir)
 
 	## filter snps with mapped coordinates
-	snps_mapped = snps2aa['varcode'].values
-	df_clean = df_filtered.loc[:,snps_mapped]
-	freqs_clean = freqs_filtered.loc[snps_mapped]
+	#snps_mapped = set(snps2aa['varcode'].values)
+	df_mapped   = df
 
-	return df_clean, freqs_clean, pheno, snps2aa, cov
+	## calculate freq
+	freqs_mapped = df.sum(axis=0) 
+	freqs_mapped = freqs_mapped / df_raw.shape[0]
+
+#	# check the number of variants per individual
+#	mapped_ind = list(map(lambda line: np.sum(line) > 0, df_mapped.iloc[:,5:].values))
+#	num_case   = pheno.loc[ mapped_ind].values.sum()
+#
+#	print("filtered_individual:%s"%str(len(mapped_ind)))
+#	print("original_individual:%s"%str(len(filtered_ind)))
+#	print("case_individual:%s"%str(num_case))
+
+	return df_mapped, freqs_mapped, pheno, snps2aa, cov
 
 if __name__ == "__main__":
 	main()

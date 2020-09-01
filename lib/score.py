@@ -170,11 +170,12 @@ def cal_distance_mat(snps2aa_tot,freqs):
 		row  = snp_pair_distance_uniq['i'].values
 		col  = snp_pair_distance_uniq['j'].values
 		data = snp_pair_distance_uniq['r'].values + 1.0
-	
-		distance_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,n_snp)).toarray()
 
+		distance_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,n_snp)).toarray()
+		np.fill_diagonal(distance_mat, 1.0)
 		distance_mat[distance_mat == 0.0] = np.inf
 		dist_mat_dict[key] = distance_mat - 1.0
+
 		# check if the distance matrix if symmetrical	
 		#print((distance_mat.T == distance_mat).all())
 	return dist_mat_dict
@@ -225,7 +226,7 @@ def main():
 	# generate the score matrix based on frequency and distance	
 	freq, score, combined_w = score_mat(freqs.values, distance_mat)	
 	K = DenseKernel(combined_w, genotype)
-
+	
 	obj = open('%s_K.pkl'%out,'wb')
 	pickle.dump(K, obj)
 	pickle.dump(pheno, obj)

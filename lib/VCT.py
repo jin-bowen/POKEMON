@@ -42,11 +42,10 @@ class VCT:
 		return nominators / denonimators 
 
 	def compute_p_value(self, r, acc):
-		# important to drop the very small ones because otherwise it is stuck
-		return self.davies(r, self.phis[np.where(self.phis > 1e-10)], acc)
+		return self.davies(r, self.phis[np.where(self.phis > 1e-8)], acc)
 
 	def davies(self, squaredform, eigvals, acc):
-		return qf.qf(squaredform, eigvals, acc=acc)[0]
+		return qf.qf(squaredform, eigvals, acc=acc,lim=10000)[0]
 
 	def test(self, phenotypes, acc=1e-6):
 		scores = self.compute_scores(phenotypes)
@@ -57,7 +56,6 @@ class VCT:
 			zero_threshold=1e-8, phis=None):
 		self.K = kernel_matrix
 		self.n = np.shape(self.K)[0]
-		# play with X
 		self.process_covariates(fixed_covariates=fixed_covariates)
 
 		self.S =  np.identity(self.n)
@@ -70,7 +68,7 @@ class VCT:
 			self.phis = np.linalg.eigvalsh(self.SKS)
 		
 			# Round to zero
-			self.phis[self.phis < zero_threshold] = 0
+			self.phis[self.phis < zero_threshold] = 0.0
 			self.phis = np.sort(self.phis)[::-1]
 	
 			eigen_mean = np.mean(self.phis)
