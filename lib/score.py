@@ -116,16 +116,13 @@ def sim_mat(freqs, distance_mat, sim_fun='exponential', alpha = 0.5, rho=0.0):
 	elif sim_fun == 'bounded': struct_w = bounded(distance_mat) 
 
 	# combine two weights kernel with a parameter alpha
-	freq_norm = np.diagonal(freq_w).max()
-	freq_struct_w = alpha * freq_w / freq_norm
+	freq_norm = np.sum(freq_w)
+	freq_struct_w = alpha * freq_w / freq_norm 
 
-	struct_norm = np.max(struct_w)
+	struct_norm = np.sum(struct_w)
 	freq_struct_w += (1.0 - alpha) * struct_w / struct_norm 
-
-	# normalize score matrix
-	#norm = np.diagonal(freq_struct_w).max()
-
-	return freq_w, struct_w, freq_struct_w 
+	
+	return freq_w, struct_w, freq_struct_w  
 
 #######################################
 ### Construct non redundant distance matrix
@@ -226,7 +223,7 @@ def main():
 	# generate the score matrix based on frequency and distance	
 	freq, score, combined_w = score_mat(freqs.values, distance_mat)	
 	K = DenseKernel(combined_w, genotype)
-	
+
 	obj = open('%s_K.pkl'%out,'wb')
 	pickle.dump(K, obj)
 	pickle.dump(pheno, obj)

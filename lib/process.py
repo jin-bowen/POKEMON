@@ -45,19 +45,20 @@ def generate(gene_name,genetype,cov_file,cov_list,ref_mapping,ref_pdb_dir):
 	if cov_file:
 		cov_raw = pd.read_csv(cov_file, sep=' ')
 		cov_raw.set_index('IID', inplace=True)
+		filtered_ind = list(map(lambda line: np.sum(line) > -1, df_raw.iloc[:,5:].values))
 	else: 
 		cov_raw = None
 		cov     = None
+		filtered_ind = list(map(lambda line: np.sum(line) > -1, df_raw.iloc[:,5:].values))
 
-	# filter individual that carries at least one variant
-	filtered_ind = list(map(lambda line: np.sum(line) > 0, df_raw.iloc[:,5:].values))	
 	ref_mapping = dd.read_csv(ref_mapping, sep="\t", dtype=str)
 	
 	df    = df_raw.iloc[filtered_ind,5:]
 	pheno = df_raw.loc[filtered_ind,'PHENOTYPE']
+
 	if cov_file:
 		cov = cov_raw.loc[filtered_ind,cov_list]
-
+	
 	# accomodate plink phenotype: 1 for control and 2 for case
 	pheno = pheno - 1
 
@@ -68,23 +69,19 @@ def generate(gene_name,genetype,cov_file,cov_list,ref_mapping,ref_pdb_dir):
 	snps    = df.columns.tolist()
 	snps2aa = snps_to_aa(snps, gene_name, ref_mapping, ref_pdb_dir)
 
-	## filter snps with mapped coordinates
-	#snps_mapped = set(snps2aa['varcode'].values)
-	df_mapped   = df
-
 	## calculate freq
-	freqs_mapped = df.sum(axis=0) 
-	freqs_mapped = freqs_mapped / df_raw.shape[0]
+	freqs = df.sum(axis=0) 
+	freqs = freqs /(2 * df_raw.shape[0])
 
 #	# check the number of variants per individual
-#	mapped_ind = list(map(lambda line: np.sum(line) > 0, df_mapped.iloc[:,5:].values))
-#	num_case   = pheno.loc[ mapped_ind].values.sum()
+#	filtered_ind = list(map(lambda line: np.sum(line) > 0, df_mapped.iloc[:,5:].values))
+#	num_case   = pheno.loc[ filtered_ind].values.sum()
 #
-#	print("filtered_individual:%s"%str(len(mapped_ind)))
+#	print("filtered_individual:%s"%str(len(filtered_ind)))
 #	print("original_individual:%s"%str(len(filtered_ind)))
 #	print("case_individual:%s"%str(num_case))
 
-	return df_mapped, freqs_mapped, pheno, snps2aa, cov
+	return df, freqs, pheno, snps2aa, cov
 
 if __name__ == "__main__":
 	main()

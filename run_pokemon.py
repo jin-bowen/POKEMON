@@ -10,12 +10,11 @@ def main():
 	parser.add_argument("--genotype", type=str,help="vcf file in plink format")
 	parser.add_argument("--cov_file", type=str,help="cov_file file in plink format", default=None)
 	parser.add_argument("--cov_list", type=str,help="individual cov_file name, seperated by comma", default=None)
-
 	parser.add_argument("--ref_mapping", type=str,help="snp to AA mapping reference")
 	parser.add_argument("--ref_pdb_dir", type=str,help="AA coordinate reference")
 	parser.add_argument("--empirical_pval", type=str,help="choose to use empirical pvalue or not")
 	parser.add_argument("--out_file", type=str, help="output file")
-
+	parser.add_argument("--alpha", type=str, help="proportion of frequency kernel involved")
 	args = parser.parse_args()
 
 	gene_name = args.gene_name
@@ -29,6 +28,7 @@ def main():
 	ref_mapping = args.ref_mapping
 	ref_pdb_dir = args.ref_pdb_dir
 	empirical = args.empirical_pval
+	alpha     = float(args.alpha)
 	out_file  = args.out_file
 
 	outf = open(out_file, "a+")
@@ -51,18 +51,17 @@ def main():
 	for pdb, distance_mat in dist_mat_dict.items():
 		# generate the score matrix based on frequency and distance
 		# alpha=1: freq only; alpha=0: struct only
-
 		freq_w, struct_w, combined_w = \
-			sim_mat(freqs.values, distance_mat, alpha = 0.0, rho=0.0)
+			sim_mat(freqs.values, distance_mat, alpha = alpha, rho=0.0)
 
 		# calculate kernel based on the score matrix
 		K = cal_Kernel(combined_w, genotype)
-		#determine if K is sparse or dense matrix
-		if sp.sparse.issparse(K): K = K.toarray()
+		m = genotype.shape[1]
 
 		if args.cov_file:	
-			obj = VCT(K, fixed_covariates=cov.values)
-		else: obj = VCT(K)
+			obj = VCT(K, fixed_covariates=cov.values, num_var=m)
+		else: obj = VCT(K, num_var=m)
+
 		pval = obj.test(pheno.values, acc=1e-4)	
 		if empirical:
 			N = np.ceil(1/p).astype(int)
