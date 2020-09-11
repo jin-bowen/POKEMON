@@ -8,6 +8,7 @@ pandas
 
 # Installation
 git clone https://github.com/bushlab-genomics/POKEMON.git 
+
 cd $HOME/POKEMON 
 
 # Example:

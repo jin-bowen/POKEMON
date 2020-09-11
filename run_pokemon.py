@@ -36,6 +36,13 @@ def main():
 	# generate input file
 	genotype,freqs,pheno,snps2aa,cov = \
 		generate(gene_name,genotype_file,cov_file,cov_list,ref_mapping,ref_pdb_dir)
+	
+#	obj = open('%s_stat.pkl'%out_file,'wb')
+#	pickle.dump(genotype, obj)
+#	pickle.dump(snps2aa, obj)
+#	pickle.dump(pheno, obj)
+#	obj.close()
+#	return 0
 
 	# no structure mapped 
 	if snps2aa.empty: return None
@@ -62,13 +69,13 @@ def main():
 			obj = VCT(K, fixed_covariates=cov.values, num_var=m)
 		else: obj = VCT(K, num_var=m)
 
-		pval = obj.test(pheno.values, acc=1e-4)	
+		pval = obj.test(pheno.values, acc=1e-15)	
 		if empirical:
 			N = np.ceil(1/p).astype(int)
 			pvals_w_shuffle = np.zeros(N)
 			for i in range(N):
 				np.random.shuffle(phenotype_val)
-				pval_shuffle = obj.test(phenotype_val, acc=1e-4)
+				pval_shuffle = obj.test(phenotype_val, acc=1e-15)
 				pvals_w_shuffle[i] = pval_shuffle
 			pvals_bool = pvals_w_shuffle < pval
 			S = np.sum(pvals_w_shuffle < pval)

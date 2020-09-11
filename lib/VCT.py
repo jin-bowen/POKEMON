@@ -11,12 +11,15 @@ class VCT:
 		self.X = fixed_covariates
 
 		# add bias term
-		if self.X is None: self.X = np.ones((self.n, 1))
+		if self.X is None: self.X = np.ones((self.n, 1), dtype='float32')
 		else: self.X = np.hstack([self.X, np.ones((self.n, 1))])
+
+		self.X = self.X.astype('float32')
 		self.p = self.X.shape[1]
 		
 		# Calculate X+
 		self.Xdagger = np.linalg.pinv(self.X)
+		self.Xdagger = self.Xdagger.astype('float32')
 
 	def compute_scores(self, phenotypes):
 		pheno_vec = phenotypes.reshape(self.n, -1)
@@ -47,12 +50,18 @@ class VCT:
 		return nominators / denonimators 
 
 	def compute_p_value(self, r, acc):
-		return self.davies(r, self.phis[np.where(self.phis > 1e-20)], acc)
+		return self.davies(r, self.phis[np.where(self.phis > 1e-10)], acc)
 
 	def davies(self, squaredform, eigvals, acc):
-		#print(squaredform, eigvals)
-		#print(qf.qf(squaredform, eigvals, acc=acc,lim=10000))
-		return qf.qf(squaredform, eigvals, acc=acc,lim=10000)[0]
+		max_mag = -np.log10(acc)
+		pval = 1.0
+		for i in reversed(range(int(max_mag)+1)):
+			acc = np.power(10,float(-i))
+			ipval, ifalse, trace = qf.qf(squaredform, eigvals, acc=acc,lim=20000)
+			if ifalse == 0: 
+				pval = ipval
+				break
+		return ipval
 
 	def test(self, phenotypes, acc=1e-6):
 
@@ -62,17 +71,23 @@ class VCT:
 
 	def __init__(self, kernel_matrix=None, fixed_covariates=None, num_var=None,\
 			zero_threshold=1e-8, phis=None):
-		self.K = kernel_matrix
+		self.K = kernel_matrix.astype('float32')
 		self.n = np.shape(self.K)[0]
 		self.m = int(num_var)
+
 		self.process_covariates(fixed_covariates=fixed_covariates)
 
-		self.S =  np.identity(self.n)
-		self.S -= np.linalg.multi_dot([self.X, self.Xdagger,self.Xdagger.T, self.X.T])
-		self.SKS = sparse.csr_matrix(self.K.dot(self.S).T)	
-		self.SKS = self.SKS.dot(self.S)
+		self.S =  np.identity(self.n, dtype='float32')
+		
+		XX_dagger = sp.linalg.blas.dgemm(alpha=1.0,a=self.X,b=self.Xdagger)
+		XX_dagger = XX_dagger.astype('float32')
+		XX_daggetT = sp.linalg.blas.dgemm(alpha=1.0,a=XX_dagger,b=XX_dagger,trans_b=True)
+		self.S -= XX_daggetT
+	
+		self.SKS = self.K.dot(self.S).T
+		self.SKS = self.SKS.astype('float32')
+		self.SKS = sp.linalg.blas.dgemm(alpha=1.0,a=self.SKS,b=self.S)
 
 		rank = min(self.n, self.m) - 1
 		self.phis = sparse.linalg.eigsh(self.SKS, k=rank, return_eigenvectors=False)	
 		self.phis = np.sort(self.phis)[::-1]	
-
