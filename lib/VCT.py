@@ -38,9 +38,9 @@ class VCT:
 		else:
 			log_fit = LinearRegression(fit_intercept=False).fit(self.X,phenotypes)
 			coef    = log_fit.coef_
+			coef = coef.reshape((1,-1))
 			pred_p = np.dot(self.X, coef.T) 
 			pheno_vec = pheno_vec - pred_p
-
 		# estimated environmental variance under null hypothesis
 		denonimators = np.dot(pheno_vec.T,pheno_vec)
 		denonimators /= self.n - self.p
@@ -55,6 +55,7 @@ class VCT:
 	def davies(self, squaredform, eigvals, acc):
 		max_mag = -np.log10(acc)
 		pval = 1.0
+		print(squaredform, eigvals)
 		for i in reversed(range(int(max_mag)+1)):
 			acc = np.power(10,float(-i))
 			ipval, ifalse, trace = qf.qf(squaredform, eigvals, acc=acc,lim=20000)

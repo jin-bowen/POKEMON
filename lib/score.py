@@ -120,7 +120,7 @@ def sim_mat(freqs, distance_mat, sim_fun='exponential', alpha = 0.5, rho=0.0):
 	freq_struct_w = alpha * freq_w / freq_norm 
 
 	struct_norm = np.sum(struct_w)
-	freq_struct_w += (1.0 - alpha) * struct_w / struct_norm 
+	freq_struct_w += (1.0 - alpha) * struct_w / struct_norm
 	
 	return freq_w, struct_w, freq_struct_w  
 

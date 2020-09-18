@@ -1,87 +1,111 @@
 import dask.dataframe as dd
+from Bio.PDB import *
 import pandas as pd
 import numpy as np
 import os.path
+import re
 
-def snps_to_aa(snps,gene_name,ref_mapping,ref_pdb_dir): 
+def parser_vep(vep_input):
+	
+	with open(vep_input)as in_file:
+		for line in in_file:
+			if re.match("^##INFO",line): 
+				csq_header_raw = line.split('\"')[1].split(':')[1]
+				csq_header = csq_header_raw.split('|')
+			if re.match("^#CHROM",line): vcf_header = line.strip('\n').split('\t')
 
-	cols = ['varcode','structure','chain','structure_position','x','y','z']
-	empty_df = pd.DataFrame(columns=cols)	
+	vep_df = pd.read_csv(vep_input,comment='#',sep='\t',header=None,names=vcf_header)
+	
+	temp_df = vep_df['INFO'].str.split(',', expand=True).add_prefix('csq')
+	vep_df = vep_df.join(temp_df)
+	temp_header = temp_df.columns
 
-	ref_mapping_grp = ref_mapping.groupby('transcript')
+	csq_df = vep_df.melt(id_vars=vcf_header, value_vars=temp_header,value_name='csq')
+	temp_df = csq_df['csq'].str.split('|',expand=True)
+	temp_df.columns = csq_header
 
-	gene_ref_mapping = ref_mapping_grp.get_group(gene_name)
-	if len(gene_ref_mapping.index) == 0: 
+	csq_df[csq_header] = temp_df[csq_header]
+	csq_df_filter = csq_df[ (csq_df['Consequence']=='missense_variant') & \
+		(csq_df['CANONICAL']=='YES')]
+
+	return csq_df_filter[['ID','Feature','SWISSPROT','Protein_position','Amino_acids']]
+
+def snps_to_aa(snps,gene_name,vep,map_to_pdb_file): 
+
+	map_to_pdb = pd.read_csv(map_to_pdb_file, header=0,sep=' ',\
+			names=['structure','chain','SWISSPROT'])
+
+	vep_mapping_processing = vep.loc[vep['ID'].isin(snps)]
+	vep_mapping = pd.merge(vep_mapping_processing, map_to_pdb, on='SWISSPROT')	
+
+	if len(vep_mapping['structure']) == 0: 
 		print("no PDB structure mapped to snps")
 		return empty_df
 
-	snp_ref_mapping = gene_ref_mapping.loc[gene_ref_mapping['varcode'].isin(snps)]	
-	keys = snp_ref_mapping['structure'].unique().compute().tolist()
+	vep_mapping['x'] = np.nan
+	vep_mapping['y'] = np.nan
+	vep_mapping['z'] = np.nan
 
-	ref_pdb = pd.DataFrame()	
-	for key in keys:	
-		pdb_path = ref_pdb_dir + '/' + str(key)
-		if not os.path.exists(pdb_path): continue
-		sub_ref_pdb = pd.read_csv(pdb_path, dtype=str)
-		ref_pdb = ref_pdb.append(sub_ref_pdb, ignore_index=True)
+	parser = PDBParser()
+	structure_list = {}
+	for pdb in set(vep_mapping['structure'].values):
+		pdbl=PDBList()
+		pdbl.retrieve_pdb_file(pdb, pdir='ref', file_format='pdb',obsolete=False)
+		structure = parser.get_structure(pdb, "ref/pdb%s.ent"%pdb)
+		structure_list[pdb] = structure
 
-	if ref_pdb.empty:
-		print("no PDB structure file available")
-		return empty_df
+	for irow, row in vep_mapping.iterrows():
+	
+		entry = row['structure']
+		chain = row['chain']
+		residue = int(row['Protein_position'])
 
-	ref_pdb_dd = dd.from_pandas(ref_pdb, npartitions=3)
-	mapped_record = dd.merge(ref_pdb_dd, snp_ref_mapping, \
-		on=['structure','chain','structure_position'], how='inner')
+		try:
+			structure = structure_list.get(entry)
+			atom = structure[0][chain][residue]["CA"]
+			coord = atom.get_coord()
+			vep_mapping.loc[irow,['x','y','z']] = coord
+		except:
+			continue
+	ori_cols = ['ID','structure','chain','Protein_position','x','y','z']
+	new_cols = ['varcode','structure','chain','structure_position','x','y','z']
+	out_df = vep_mapping[ori_cols]
+	out_df.columns = new_cols
 
-	out_df = mapped_record[cols].compute()
-	return	out_df.drop_duplicates().reset_index(drop=True)
+	return	out_df.dropna().drop_duplicates().reset_index(drop=True)
 
-def generate(gene_name,genetype,cov_file,cov_list,ref_mapping,ref_pdb_dir):
+def parser_vcf(genotype,cov_file,cov_list):
 
-	df_raw=pd.read_csv(genetype, sep=' ')
+	df_raw=pd.read_csv(genotype, sep=' ')
 	df_raw.set_index('IID', inplace=True)
 	df_raw.fillna(0, inplace=True)
 
 	if cov_file:
 		cov_raw = pd.read_csv(cov_file, sep=' ')
 		cov_raw.set_index('IID', inplace=True)
-		filtered_ind = list(map(lambda line: np.sum(line) > -1, df_raw.iloc[:,5:].values))
 	else: 
 		cov_raw = None
 		cov     = None
-		filtered_ind = list(map(lambda line: np.sum(line) > -1, df_raw.iloc[:,5:].values))
 
-	ref_mapping = dd.read_csv(ref_mapping, sep="\t", dtype=str)
-	
-	df    = df_raw.iloc[filtered_ind,5:]
-	pheno = df_raw.loc[filtered_ind,'PHENOTYPE']
+	df = df_raw.iloc[:,5:]
+	pheno = df_raw.loc[:,'PHENOTYPE'] 
+
+	# for binary phenotype
+	if pheno.nunique() == 2:
+		pheno = pheno - 1
 
 	if cov_file:
-		cov = cov_raw.loc[filtered_ind,cov_list]
+		cov = cov_raw.loc[:,cov_list]
 	
-	# accomodate plink phenotype: 1 for control and 2 for case
-	pheno = pheno - 1
-
 	# change plink style 12:56477541:C:T_T  to 12:56477541:C:T 
-	df_rename   = list(map(lambda s: s[:-2], df.columns.values))
+	df_rename   = list(map(lambda x: x.split('_', 1)[0], df.columns))
 	df.columns  = df_rename
-
-	snps    = df.columns.tolist()
-	snps2aa = snps_to_aa(snps, gene_name, ref_mapping, ref_pdb_dir)
 
 	## calculate freq
 	freqs = df.sum(axis=0) 
 	freqs = freqs /(2 * df_raw.shape[0])
 
-#	# check the number of variants per individual
-#	filtered_ind = list(map(lambda line: np.sum(line) > 0, df_mapped.iloc[:,5:].values))
-#	num_case   = pheno.loc[ filtered_ind].values.sum()
-#
-#	print("filtered_individual:%s"%str(len(filtered_ind)))
-#	print("original_individual:%s"%str(len(filtered_ind)))
-#	print("case_individual:%s"%str(num_case))
-
-	return df, freqs, pheno, snps2aa, cov
+	return df, freqs, pheno, cov
 
 if __name__ == "__main__":
 	main()
