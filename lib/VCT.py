@@ -55,7 +55,6 @@ class VCT:
 	def davies(self, squaredform, eigvals, acc):
 		max_mag = -np.log10(acc)
 		pval = 1.0
-		print(squaredform, eigvals)
 		for i in reversed(range(int(max_mag)+1)):
 			acc = np.power(10,float(-i))
 			ipval, ifalse, trace = qf.qf(squaredform, eigvals, acc=acc,lim=20000)

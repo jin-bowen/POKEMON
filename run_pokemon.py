@@ -42,12 +42,6 @@ def main():
 	line_num = chain_stat['varcode'].argmax()
 	pdb = chain_stat.loc[line_num,'structure']
 
-#	obj = open('%s_stat.pkl'%out_file,'wb')
-#	pickle.dump(genotype, obj)
-#	pickle.dump(snps2aa, obj)
-#	pickle.dump(pheno, obj)
-#	obj.close()
-
 	# no structure mapped 
 	if snps2aa.empty: return None
 	# if there is only one element in the kernel
