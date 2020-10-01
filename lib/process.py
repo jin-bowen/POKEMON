@@ -14,10 +14,9 @@ def parser_vep(vep_input):
 				csq_header = csq_header_raw.split('|')
 			if re.match("^#CHROM",line): 
 				vcf_header_raw = line.strip('\n').split('\t')
-				vcf_header = vcf_header_raw[0:9]
-
+				vcf_header = vcf_header_raw[0:8]
 	vep_df = pd.read_csv(vep_input,comment='#',sep='\t',header=None,names=vcf_header, \
-				usecols=range(9))
+				usecols=range(8))
 	
 	temp_df = vep_df['INFO'].str.split(',', expand=True).add_prefix('csq')
 	vep_df = vep_df.join(temp_df)
@@ -32,8 +31,8 @@ def parser_vep(vep_input):
 		(csq_df['CANONICAL']=='YES')]
 
 	pdbentry = csq_df_filter['SWISSPROT'].str.split('_',1, expand=True)
-	csq_df_filter['SWISSPROT'] = pdbentry[0]
-	csq_df_filter['ID']=csq_df_filter[['#CHROM','POS','REF','ALT']].astype(str).agg(':'.join,axis=1)
+	csq_df_filter.loc[:,'SWISSPROT'] = pdbentry[0]
+	csq_df_filter.loc[:,'ID']=csq_df_filter[['#CHROM','POS','REF','ALT']].astype(str).agg(':'.join,axis=1)
 
 	return csq_df_filter[['ID','Feature','SWISSPROT','Protein_position','Amino_acids']]
 
@@ -46,7 +45,7 @@ def snps_to_aa(snps,gene_name,vep,map_to_pdb_file):
 
 	if len(vep_mapping['structure']) == 0: 
 		print("no PDB structure mapped to snps")
-		return empty_df
+		return 0
 
 	vep_mapping['x'] = np.nan
 	vep_mapping['y'] = np.nan
