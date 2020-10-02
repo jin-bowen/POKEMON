@@ -23,8 +23,9 @@ def beta(freq, a=1, b=25):
 	the beta weight: float or a 1D array
 	"""
 	beta_freq = stats.beta.pdf(freq, a, b)
+	beta_freq_sq = np.sqrt(beta_freq)
 	
-	return np.array(beta_freq)
+	return np.array(beta_freq_sq)
 
 #######################################
 ### The score function(exponential form)
@@ -82,7 +83,7 @@ def bounded(dist_mat, l=8, h=20):
 
 #######################################
 ### The weight of variant
-def sim_mat(freqs, distance_mat, sim_fun='exponential', alpha = 0.5, rho=0.0):
+def weight_mat(freqs, distance_mat, aa_weight,use_aa=False,sim_fun='exponential',alpha = 0.5):
 	"""
 	Given a vector of minor allele frequency and matrix of cartisen coordinates
 	compute the similarity matrix with score in the each cell representing
@@ -101,32 +102,65 @@ def sim_mat(freqs, distance_mat, sim_fun='exponential', alpha = 0.5, rho=0.0):
 	"""
 
 	# calculate frequency based kernel
-	## rho is a parameter leverage between skat and burden test
 	beta_freqs = beta(freqs)
 	beta_freqs_diag = np.diag(beta_freqs)
 	p = beta_freqs.shape[0]
-
-	R  = (1-rho) * np.diag(np.full(p,1)) 
-	R += rho * np.full((p, p), 1)
+	R  = np.diag(np.full(p,1)) 
 
 	freq_w = np.linalg.multi_dot([beta_freqs_diag, R, beta_freqs_diag])
+	beta_freqs_vec = beta_freqs.reshape((-1,1))
+	freq_scale = beta_freqs_vec.dot(beta_freqs_vec.T)
 
 	# calculate protein structure based kernal
 	if sim_fun == 'exponential': struct_w = exponential(distance_mat)
 	elif sim_fun == 'bounded': struct_w = bounded(distance_mat) 
 
-	# combine two weights kernel with a parameter alpha
-	freq_norm = np.sum(freq_w)
-	freq_struct_w = alpha * freq_w / freq_norm 
+	# scale by AA weight
+	aa_weight_vec = aa_weight.reshape((-1,1))
+	aa_scale = aa_weight_vec.dot(aa_weight_vec.T)
+	if use_aa: struct_w *= aa_scale
 
 	struct_norm = np.sum(struct_w)
-	freq_struct_w += (1.0 - alpha) * struct_w / struct_norm
-	
+	freq_norm = np.sum(freq_w)
+	# combine two weights kernel with a parameter alpha
+	if alpha == 0:
+		freq_struct_w = struct_w / struct_norm
+	elif alpha == 0.5:
+		freq_struct_w = freq_scale * struct_w / (struct_norm * freq_norm)
+	elif alpha == 1:
+		freq_struct_w = freq_w / freq_norm	
+			
 	return freq_w, struct_w, freq_struct_w  
 
 #######################################
+def cal_aa_weight(snps2aa_tot, pwm, n_snp):
+	"""
+	Deal with situation when a single snp are mapped to more than two different residues 
+	  in a protein structure. Maintain the smallest pairwise distance
+
+	Args:
+	snps2aa - a pandas dataframe with header:
+	  'snp','structid','chain','chain_seqid','x','y','z','aa'
+
+	Returns:
+	"""
+	snps2aa_tot = snps2aa_tot.set_index('id')
+	snps2aa_tot[['ref_aa','alt_aa']] = snps2aa_tot['aa'].str.split('/', expand=True)
+
+	log_score = snps2aa_tot.apply(lambda x: pwm.loc[x['ref_aa'],x['alt_aa']], axis=1)
+	weight = log_score.apply(lambda x: np.exp(-x))
+
+	row = weight.index.tolist()
+	col = np.zeros(weight.shape[0])
+	data = weight.values
+	aa_weight_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,1)).toarray()
+	aa_weight_mat[aa_weight_mat == 0.0] = 1
+
+	return np.sqrt(aa_weight_mat)
+
+#######################################
 ### Construct non redundant distance matrix
-def cal_distance_mat(snps2aa_tot,freqs):
+def cal_distance_mat(snps2aa_tot,n_snp):
 	"""
 	Deal with situation when a single snp are mapped to more than two different residues 
 	  in a protein structure. Maintain the smallest pairwise distance
@@ -139,16 +173,8 @@ def cal_distance_mat(snps2aa_tot,freqs):
 	Returns:
 	distance_mat - a matrix containing the minimum pairwise distance between snps
 	"""
-	
-	snps = freqs.index.values
-	n_snp = snps.shape[0]
 
-	idx_tab = pd.DataFrame()
-	idx_tab['id'] = list(range(n_snp))
-	idx_tab['varcode'] = snps
-	
-	snps2aa_tot_idx = pd.merge(snps2aa_tot, idx_tab, on='varcode')
-	snps2aa_grp = snps2aa_tot_idx.groupby(['structure'])
+	snps2aa_grp = snps2aa_tot.groupby(['structure'])
 	dist_mat_dict = {}
 
 	for key, snps2aa in snps2aa_grp:
