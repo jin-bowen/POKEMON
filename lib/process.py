@@ -9,7 +9,7 @@ def parser_vep(vep_input):
 	
 	with open(vep_input)as in_file:
 		for line in in_file:
-			if re.match("^##INFO",line): 
+			if re.match("^##INFO=<ID=CSQ",line): 
 				csq_header_raw = line.split('\"')[1].split(':')[1]
 				csq_header = csq_header_raw.split('|')
 			if re.match("^#CHROM",line): 
@@ -78,38 +78,38 @@ def snps_to_aa(snps,gene_name,vep,map_to_pdb_file):
 
 	return	out_df.dropna().drop_duplicates().reset_index(drop=True)
 
-def parser_vcf(genotype,cov_file,cov_list):
+def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,keep=None):
 
-	df_raw=pd.read_csv(genotype, sep=' ')
-	df_raw.set_index('IID', inplace=True)
-	df_raw.fillna(0, inplace=True)
+	# process genotype file
+	genotype_raw=pd.read_csv(genotype_file, sep=' ')
+	genotype_raw.set_index('IID', inplace=True)
+	genotype_raw.fillna(0, inplace=True)
+	genotype = genotype_raw.iloc[:,5:]
 
+	# process covariates
 	if cov_file:
 		cov_raw = pd.read_csv(cov_file, sep=' ')
 		cov_raw.set_index('IID', inplace=True)
-	else: 
-		cov_raw = None
-		cov     = None
-
-	df = df_raw.iloc[:,5:]
-	pheno = df_raw.loc[:,'PHENOTYPE'] 
-
-	# for binary phenotype
-	if pheno.nunique() == 2:
-		pheno = pheno - 1
-
-	if cov_file:
 		cov = cov_raw.loc[:,cov_list]
-	
-	# change plink style 12:56477541:C:T_T  to 12:56477541:C:T 
-	df_rename   = list(map(lambda x: x.split('_', 1)[0], df.columns))
-	df.columns  = df_rename
+	else: cov = None
+
+	# process phenotype files
+	phenotype = pd.read_csv(phenotype_file, sep=' ',index_col=0)
+
+	genotype_ind = genotype.index.tolist()
+	phenotype_ind = phenotype.columns.tolist()
+	individual = set(genotype_ind).intersection(phenotype_ind)
+
+	if cov_file:	
+		cov_ind = cov.index.tolist()
+		individual = set(individual).intersection(cov_ind)
+		cov = cov.loc[individual]
 
 	## calculate freq
-	freqs = df.sum(axis=0) 
-	freqs = freqs /(2 * df_raw.shape[0])
+	freqs = genotype.sum(axis=0) 
+	freqs = freqs /(2 * genotype_raw.shape[0])
 
-	return df, freqs, pheno, cov
+	return genotype.loc[individual],freqs,phenotype[individual], cov
 
 if __name__ == "__main__":
 	main()
