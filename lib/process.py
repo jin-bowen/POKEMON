@@ -53,7 +53,7 @@ def snps_to_aa(snps,gene_name,vep,map_to_pdb_file):
 	vep_mapping['x'] = np.nan
 	vep_mapping['y'] = np.nan
 	vep_mapping['z'] = np.nan
-
+	
 	parser = PDBParser()
 	structure_list = {}
 	for pdb in set(vep_mapping['structure'].values):
@@ -85,7 +85,6 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,keep=None):
 	genotype_raw.set_index('IID', inplace=True)
 	genotype_raw.fillna(0, inplace=True)
 	genotype = genotype_raw.iloc[:,5:]
-
 	# process covariates
 	if cov_file:
 		cov_raw = pd.read_csv(cov_file, sep=' ')
@@ -95,11 +94,11 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,keep=None):
 
 	# process phenotype files
 	phenotype = pd.read_csv(phenotype_file, sep=' ',index_col=0)
+	if phenotype.shape[1] < 2: phenotype = phenotype.transpose()
+	phenotype_ind = phenotype.columns.tolist()
 
 	genotype_ind = genotype.index.tolist()
-	phenotype_ind = phenotype.columns.tolist()
 	individual = set(genotype_ind).intersection(phenotype_ind)
-
 	if cov_file:	
 		cov_ind = cov.index.tolist()
 		individual = set(individual).intersection(cov_ind)

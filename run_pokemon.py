@@ -35,7 +35,7 @@ def main():
 	use_aa_bool   = args.use_aa
 	if args.pdb: pdb = args.pdb
 	else: pdb = None
-
+	
 	# default files
 	map_to_pdb_file = 'ref/pdbsws_chain'
 	pwm_file = 'ref/blosum62'
@@ -65,18 +65,18 @@ def main():
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
 
-#	obj = open('%s_stat.pkl'%out_file,'wb')
-#	pickle.dump(genotype, obj)
-#	pickle.dump(phenotype, obj)
-#	pickle.dump(snps2aa, obj)
-#	obj.close()
-#	return 0
-
 	# find the protein with most varaints mapped
 	if not pdb:
 		uniq_map = snps2aa.groupby(['structure','chain'])['varcode'].count().reset_index()
 		iline = uniq_map['varcode'].argmax()
 		pdb = uniq_map.loc[iline,'structure']
+
+#	obj = open('%s_%s.pkl'%(out_file,pdb),'wb')
+#	pickle.dump(genotype, obj)
+#	pickle.dump(phenotype, obj)
+#	pickle.dump(snps2aa, obj)
+#	obj.close()
+#	return 0
 
 	# get distance matrix
 	dist_mat_dict = cal_distance_mat(snps2aa, n_snp)
@@ -93,6 +93,7 @@ def main():
 	# calculate kernel based on the score matrix
 	K = cal_Kernel(combined_w, genotype)
 	m = genotype.shape[1]
+
 	if args.cov_file:	
 		obj = VCT(K, fixed_covariates=cov.values, num_var=m)
 	else: obj = VCT(K, num_var=m)

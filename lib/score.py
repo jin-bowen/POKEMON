@@ -23,9 +23,8 @@ def beta(freq, a=1, b=25):
 	the beta weight: float or a 1D array
 	"""
 	beta_freq = stats.beta.pdf(freq, a, b)
-	beta_freq_sq = np.sqrt(beta_freq)
 	
-	return np.array(beta_freq_sq)
+	return np.array(beta_freq)
 
 #######################################
 ### The score function(exponential form)
@@ -118,6 +117,7 @@ def weight_mat(freqs, distance_mat, aa_weight,use_aa=False,sim_fun='exponential'
 	# scale by AA weight
 	aa_weight_vec = aa_weight.reshape((-1,1))
 	aa_scale = aa_weight_vec.dot(aa_weight_vec.T)
+
 	if use_aa: struct_w *= aa_scale
 
 	struct_norm = np.sum(struct_w)
