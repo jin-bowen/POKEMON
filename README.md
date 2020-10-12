@@ -7,7 +7,7 @@ pokemon is a structure based variance component test for studying rare variants
 - fastlmm  
 see the instruction guide here: https://pypi.org/project/fastlmm/
 - pandas  
-see the instruction guide here:https://pandas.pydata.org/docs/getting_started/install.html  
+see the instruction guide here: https://pandas.pydata.org/docs/getting_started/install.html  
 
 ### Installation
 ```bash
@@ -20,19 +20,19 @@ gene=ENST00000373113
 python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --cov_file test.cov --cov_list APOE4_dose,APOE2_dose --alpha 0 --use_aa --annotation ENST00000373113.csq --out_file results
 ```
 ### Flags:
---gene_name: required
+--gene_name: required  
    ensemble ID, used for mapping snp from gene to protein  
---genotype: required
+--genotype: required  
    plink output with recode A option(The 'transpose' modifier).    
     - The columns for genotype file is FID IID PAT MAT SEX PHENOTYPE <snp1> ... <snp2>  
-    * snp must be named as chr:pos:alt:ref(e.g., 6:41129275:G:C)  
---cov_file:  *optional*
-  covariate file.
+    - * snp must be named as chr:pos:alt:ref(e.g., 6:41129275:G:C)  
+--cov_file:  *optional*  
+  covariate file.  
   - the columns for covariate file are: FID IID <cov1> ... <cov2>  
 --cov_list: *optional, but compulsory if --cov_file is used*  
-  covariates to be used
-  - covariate must be present in the columns for covariate file
---annotation: 
---alpha:
---use_aa:
---out_file:
+  covariates to be used  
+  - covariate must be present in the columns for covariate file  
+--annotation:   
+--alpha:  
+--use_aa:  
+--out_file:  
