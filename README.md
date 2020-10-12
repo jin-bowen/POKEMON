@@ -36,9 +36,17 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
   covariates to be used  
   **covariate must be present in the columns for covariate file**  
    
---annotation:  
+--annotation: required
+  Consequence annotations from Ensembl VEP __with vcf format__  
+  INFO columns must contains CANONICAL|SWISSPROT|Amino_acids|Protein_position(can be easily achieved when run vep with outputing everything)  
 
+--alpha:  required  
+  alpha = 0: using structural kernel only  
+  alpha = 0.5: using combined kernel of frequency and structure  
+  alpha = 1: using frequency kernel only(equivalent to a standard SKAT test)  
 
---alpha:  
---use_aa:  
---out_file:  
+--use_aa: *optional*  
+  if explicitly flagged, the kernel will be further scaled by AA change weight from BLOSUM62 matrix  
+  
+--out_file: required  
+  output file where the POKEMON will write to 
