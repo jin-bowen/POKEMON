@@ -26,7 +26,13 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
 **--genotype**: required  
    plink output with recode A option(The 'transpose' modifier).    
    The columns for genotype file is FID IID PAT MAT SEX PHENOTYPE <snp1> ... <snp2>    
-   **snp must be named as chr:pos:alt:ref(e.g., 6:41129275:G:C)**  
+   **snp must be named as chr:pos:alt:ref (e.g., 6:41129275:G:C)**
+  
+   A typical script to generate the file:
+   ```
+   plink --vcf <vcf file with genotype> --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 2 --out test_gene
+   sed -i 's/_[A-Z]//g' test_gene.raw
+   ```
    
 **--cov_file**:  *optional*  
   covariate file.  
