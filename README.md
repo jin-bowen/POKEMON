@@ -25,8 +25,8 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
    
 --genotype: required  
    plink output with recode A option(The 'transpose' modifier).    
-    - The columns for genotype file is FID IID PAT MAT SEX PHENOTYPE <snp1> ... <snp2>  
-    - * snp must be named as chr:pos:alt:ref(e.g., 6:41129275:G:C)  
+   The columns for genotype file is FID IID PAT MAT SEX PHENOTYPE <snp1> ... <snp2>    
+   **snp must be named as chr:pos:alt:ref(e.g., 6:41129275:G:C)**  
    
 --cov_file:  *optional*  
   covariate file.  
@@ -34,7 +34,7 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
    
 --cov_list: *optional, but compulsory if --cov_file is used*  
   covariates to be used  
-  covariate must be present in the columns for covariate file  
+  **covariate must be present in the columns for covariate file**  
    
 --annotation:  
 
