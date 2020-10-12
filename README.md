@@ -35,8 +35,8 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
    ```
    
 **--cov_file**:  *optional*  
-    covariate file.  
-    the columns for covariate file are: FID IID <cov1> ... <cov2> 
+    + covariate file.  
+    + the columns for covariate file are: FID IID <cov1> ... <cov2> 
    
 **--cov_list**: *optional, but compulsory if --cov_file is used*  
     covariates to be used  
