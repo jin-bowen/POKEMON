@@ -35,30 +35,30 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
    ```
    
 **--cov_file**:  *optional*  
-  covariate file.  
-  the columns for covariate file are: FID IID <cov1> ... <cov2> 
+    covariate file.  
+    the columns for covariate file are: FID IID <cov1> ... <cov2> 
    
 **--cov_list**: *optional, but compulsory if --cov_file is used*  
-  covariates to be used  
-  **covariate must be present in the columns for covariate file**  
+    covariates to be used  
+    **covariate must be present in the columns for covariate file**  
    
 **--annotation**: required
-  Consequence annotations from Ensembl VEP __with vcf format__  
-  INFO columns must contains CANONICAL|SWISSPROT|Amino_acids|Protein_position(can be easily achieved when run vep with outputing everything)  
+    Consequence annotations from Ensembl VEP __with vcf format__  
+    INFO columns must contains CANONICAL|SWISSPROT|Amino_acids|Protein_position(can be easily achieved when run vep with outputing everything)  
 
 **--alpha**:  required  
-  alpha = 0: using structural kernel only  
-  alpha = 0.5: using combined kernel of frequency and structure  
-  alpha = 1: using frequency kernel only(equivalent to a standard SKAT test)  
+    alpha = 0: using structural kernel only  
+    alpha = 0.5: using combined kernel of frequency and structure  
+    alpha = 1: using frequency kernel only(equivalent to a standard SKAT test)  
 
 **--use_aa**: *optional*  
-  if explicitly flagged, the kernel will be further scaled by AA change weight from BLOSUM62 matrix  
+    if explicitly flagged, the kernel will be further scaled by AA change weight from BLOSUM62 matrix  
   
 **--out_file**: required  
-  output file where the POKEMON will write to  
+    output file where the POKEMON will write to  
 
 ### Reference:  
-TBD  
+    TBD  
 
 ### License:  
-MIT  
+    MIT  
