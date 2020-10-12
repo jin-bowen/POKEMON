@@ -34,18 +34,21 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
    sed -i 's/_[A-Z]//g' test_gene.raw
    ```
    
-**--cov_file**:  *optional*  
-    + covariate file.  
-    + the columns for covariate file are: FID IID <cov1> ... <cov2> 
-   
-**--cov_list**: *optional, but compulsory if --cov_file is used*  
+**--cov_file**:  *optional* 
++
+    covariate file.  
+    the columns for covariate file are: FID IID <cov1> ... <cov2> 
++ 
+**--cov_list**: *optional, but compulsory if --cov_file is used* 
++
     covariates to be used  
     **covariate must be present in the columns for covariate file**  
-   
++   
 **--annotation**: required
++
     Consequence annotations from Ensembl VEP __with vcf format__  
     INFO columns must contains CANONICAL|SWISSPROT|Amino_acids|Protein_position(can be easily achieved when run vep with outputing everything)  
-
++
 **--alpha**:  required  
     alpha = 0: using structural kernel only  
     alpha = 0.5: using combined kernel of frequency and structure  
