@@ -44,7 +44,8 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
  
 **--annotation**: required  
     Consequence annotations from Ensembl VEP __with vcf format__  
-    INFO columns must contains CANONICAL|SWISSPROT|Amino_acids|Protein_position(can be easily achieved when run vep with outputing everything)   
+    INFO columns must contains CANONICAL|SWISSPROT|Amino_acids|Protein_position(can be easily achieved when run vep with outputing everything)    
+    
 **--alpha**:  required    
     alpha = 0: using structural kernel only  
     alpha = 0.5: using combined kernel of frequency and structure  
