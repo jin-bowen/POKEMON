@@ -10,13 +10,15 @@ pandas
   see the instruction guide here:https://pandas.pydata.org/docs/getting_started/install.html
 
 ### Installation
+```bash
 git clone https://github.com/bushlab-genomics/POKEMON.git  
 cd POKEMON 
-
+```
 ### Example:
+```
 gene=ENST00000373113
 python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --cov_file test.cov --cov_list APOE4_dose,APOE2_dose --alpha 0 --use_aa --annotation ENST00000373113.csq --out_file results
-
+```
 ### Flags:
 --gene_name: ensemble ID, used for mapping snp from gene to protein  
 --genotype: plink output with recode A option(The 'transpose' modifier).    
