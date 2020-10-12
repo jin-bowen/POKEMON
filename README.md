@@ -49,4 +49,10 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
   if explicitly flagged, the kernel will be further scaled by AA change weight from BLOSUM62 matrix  
   
 **--out_file**: required  
-  output file where the POKEMON will write to 
+  output file where the POKEMON will write to  
+
+### Reference:  
+TBD  
+
+### License:  
+MIT  
