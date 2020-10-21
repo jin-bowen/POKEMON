@@ -6,8 +6,12 @@ pokemon is a structure based variance component test for studying rare variants
 - python > 3.6  
 - fastlmm  
 see the instruction guide here: https://pypi.org/project/fastlmm/  
+
+required packaged, usually installed if you use a anaconda distributed python
 - biopython  
 see the instruction guide here: https://biopython.org/wiki/Download
+- sklearn 
+see the instruction guide here: https://scikit-learn.org/stable/install.html
 
 ### Installation
 ```bash
