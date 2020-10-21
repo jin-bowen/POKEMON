@@ -13,9 +13,10 @@ git clone https://github.com/bushlab-genomics/POKEMON.git
 cd POKEMON 
 ```
 ### Example:
-```
+```bash
 gene=ENST00000373113
-python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --cov_file test.cov --cov_list APOE4_dose,APOE2_dose --alpha 0 --use_aa --annotation ${gene}.csq --out_file results
+python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --cov_file test.cov \
+--cov_list APOE4_dose,APOE2_dose --alpha 0 --use_aa --annotation ${gene}.csq --out_file results
 ```
 ### Flags:
 **--gene_name**: required  
@@ -27,7 +28,7 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
    **snp must be named as chr:pos:alt:ref (e.g., 6:41129275:G:C)**
   
    A typical command to generate the genotype file:
-   ```
+   ```bash
    bcftools annotate --set-id +'%CHROM:%POS:%REF:%FIRST_ALT' <vcf file with genotype>  
    
    plink --vcf <vcf file with genotype> --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene
@@ -40,9 +41,9 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
     covariate file.  
     the columns for covariate file are: FID IID <cov1> ... <cov2>
     A typical command to generate the covariate file:  
-    ```
-    ${dir_to_plink}/plink --vcf <vcf file with genotype> --allow-no-sex **--covar <vcf file with genotype>** --prune --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene
-    ```  
+ 
+    ${dir_to_plink}/plink --vcf <vcf file with genotype> --allow-no-sex --covar <vcf file with genotype> \  
+    --prune --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene 
    
 **--cov_list**: *optional, but compulsory if --cov_file is used*   
     covariates to be used  
@@ -52,9 +53,11 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
     Consequence annotations from Ensembl VEP __with vcf format__  
     INFO columns must contains CANONICAL|SWISSPROT|Amino_acids|Protein_position(can be easily achieved when run vep with outputing everything)    
     A typical script to generate the annotation file:  
-    ```
+    
+    
     ${dir_to_vep}/vep -i --vcf <vcf file with genotype> --format vcf --cache --offline --dir <dir to cache> --check_existing --symbol --protein --uniprot --domains --canonical --biotype --pubmed --coding_only --assembly GRCh37 --buffer_size 50000  --fork 8 --vcf -o test_gene.csq --no_stats
-    ```    
+    
+    
 **--alpha**:  required    
     alpha = 0: using structural kernel only  
     alpha = 0.5: using combined kernel of frequency and structure  
