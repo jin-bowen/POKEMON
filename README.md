@@ -12,7 +12,7 @@ see the instruction guide here: https://pypi.org/project/fastlmm/
 Required packages, usually installed if you use a anaconda distributed python:
 - biopython  
 see the instruction guide here: https://biopython.org/wiki/Download
-- sklearn 
+- sklearn   
 see the instruction guide here: https://scikit-learn.org/stable/install.html
 
 ### Installation
