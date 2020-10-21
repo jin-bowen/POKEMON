@@ -5,7 +5,9 @@ pokemon is a structure based variance component test for studying rare variants
 ### Dependencies
 - python > 3.6  
 - fastlmm  
-see the instruction guide here: https://pypi.org/project/fastlmm/
+see the instruction guide here: https://pypi.org/project/fastlmm/  
+- biopython  
+see the instruction guide here: https://biopython.org/wiki/Download
 
 ### Installation
 ```bash
