@@ -3,11 +3,13 @@ pokemon is a structure based variance component test for studying rare variants
 
 ## Setup
 ### Dependencies
-- python > 3.6  
+python > 3.6  
+
+Required package:
 - fastlmm  
 see the instruction guide here: https://pypi.org/project/fastlmm/  
 
-required packaged, usually installed if you use a anaconda distributed python
+Required packages, usually installed if you use a anaconda distributed python:
 - biopython  
 see the instruction guide here: https://biopython.org/wiki/Download
 - sklearn 
