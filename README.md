@@ -57,7 +57,7 @@ ${dir_to_plink}/plink --vcf <vcf file with genotype> --allow-no-sex --covar <vcf
     A typical script to generate the annotation file:  
 
 ```    
-${dir_to_vep}/vep -i --vcf <vcf file with genotype> --format vcf --cache --offline --dir <dir to cache> \
+${dir_to_vep}/vep -i <vcf file with genotype> --format vcf --cache --offline --dir <dir to cache> \
 --check_existing --symbol --protein --uniprot --domains --canonical --biotype --pubmed --coding_only --assembly GRCh37 \
 --buffer_size 50000  --fork 8 --vcf -o test_gene.csq --no_stats
 ```
