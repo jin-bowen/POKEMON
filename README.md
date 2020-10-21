@@ -28,23 +28,25 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
    **snp must be named as chr:pos:alt:ref (e.g., 6:41129275:G:C)**
   
    A typical command to generate the genotype file:
-   ```bash
-   bcftools annotate --set-id +'%CHROM:%POS:%REF:%FIRST_ALT' <vcf file with genotype>  
+```bash
+bcftools annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' <vcf file with genotype>  
+
+plink --vcf <vcf file with genotype> --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene
    
-   plink --vcf <vcf file with genotype> --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene
-   
-   # change the formart from chr:pos:ref:alt_alt -> chr:pos:ref:alt
-   sed -i 's/_[A-Z]//g' test_gene.raw
-   ```
+# change the formart from chr:pos:ref:alt_alt -> chr:pos:ref:alt
+sed -i 's/_[A-Z]//g' test_gene.raw
+```
    
 **--cov_file**:  *optional*   
     covariate file.  
     the columns for covariate file are: FID IID <cov1> ... <cov2>
     A typical command to generate the covariate file:  
- 
-    ${dir_to_plink}/plink --vcf <vcf file with genotype> --allow-no-sex --covar <vcf file with genotype> \  
-    --prune --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene 
-   
+
+``` 
+${dir_to_plink}/plink --vcf <vcf file with genotype> --allow-no-sex --covar <vcf file with genotype> \  
+ --prune --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene 
+```
+
 **--cov_list**: *optional, but compulsory if --cov_file is used*   
     covariates to be used  
     **covariate must be present in the columns for covariate file**  
@@ -53,12 +55,12 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
     Consequence annotations from Ensembl VEP __with vcf format__  
     INFO columns must contains CANONICAL|SWISSPROT|Amino_acids|Protein_position(can be easily achieved when run vep with outputing everything)    
     A typical script to generate the annotation file:  
-    
-    
-    ${dir_to_vep}/vep -i --vcf <vcf file with genotype> --format vcf --cache --offline --dir <dir to cache> \
-    --check_existing --symbol --protein --uniprot --domains --canonical --biotype --pubmed --coding_only --assembly GRCh37 \
-    --buffer_size 50000  --fork 8 --vcf -o test_gene.csq --no_stats
-    
+
+```    
+${dir_to_vep}/vep -i --vcf <vcf file with genotype> --format vcf --cache --offline --dir <dir to cache> \
+--check_existing --symbol --protein --uniprot --domains --canonical --biotype --pubmed --coding_only --assembly GRCh37 \
+--buffer_size 50000  --fork 8 --vcf -o test_gene.csq --no_stats
+```
     
 **--alpha**:  required    
     alpha = 0: using structural kernel only  
