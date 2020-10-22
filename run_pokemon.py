@@ -1,6 +1,7 @@
 from lib.process import *
 from lib.score import *
 from lib.VCT import *
+from lib.plot import *
 import argparse
 
 def main():
@@ -17,6 +18,7 @@ def main():
 	parser.add_argument("--use_aa", action='store_true')
 	parser.add_argument("--out_file", type=str, help="output file")
 	parser.add_argument("--pdb", type=str, default=None)
+	parser.add_argument("--figures", action='store_true')
 	args = parser.parse_args()
 
 	gene_name      = args.gene_name
@@ -35,6 +37,7 @@ def main():
 	use_aa_bool   = args.use_aa
 	if args.pdb: pdb = args.pdb
 	else: pdb = None
+	draw_figures = args.figures
 	
 	# default files
 	map_to_pdb_file = 'ref/pdbsws_chain'
@@ -71,12 +74,8 @@ def main():
 		iline = uniq_map['varcode'].argmax()
 		pdb = uniq_map.loc[iline,'structure']
 
-#	obj = open('%s_%s.pkl'%(out_file,pdb),'wb')
-#	pickle.dump(genotype, obj)
-#	pickle.dump(phenotype, obj)
-#	pickle.dump(snps2aa, obj)
-#	obj.close()
-#	return 0
+	if draw_figures: 
+		score_on_var(genotype,snps2aa,phenotype,pdb)
 
 	# get distance matrix
 	dist_mat_dict = cal_distance_mat(snps2aa, n_snp)

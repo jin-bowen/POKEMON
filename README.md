@@ -75,11 +75,18 @@ ${dir_to_vep}/vep -i <vcf file with genotype> --format vcf --cache --offline --d
     alpha = 0.5: using combined kernel of frequency and structure  
     alpha = 1: using frequency kernel only(equivalent to a standard SKAT test)  
 
+**--pdb**: *optional*   
+    e.g., --pdb 5eli, POKEMON will run on the specificed protein:5eli rather the optimal one  
+
 **--use_aa**: *optional*  
     if explicitly flagged, the kernel will be further scaled by AA change weight from BLOSUM62 matrix  
+
+**--figures**: *optional*    
+    if explicitly flagged, POKEMON will save pymol figures  
+    ** pymol must be installed to use this flag, see instruction here: https://pymol.org/2/**  
   
 **--out_file**: required  
-    output file where the POKEMON will write to  
+    output file where the POKEMON will write  
 
 ### Reference:  
     TBD  
