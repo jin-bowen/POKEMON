@@ -81,7 +81,7 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,keep=None):
 
 	# process genotype file
 	genotype_raw=pd.read_csv(genotype_file, sep=' ')
-	genotype_raw.set_index(genotype_raw.columns[0], inplace=True)
+	genotype_raw.set_index(genotype_raw.columns[1], inplace=True)
 	genotype_raw.fillna(0, inplace=True)
 	genotype = genotype_raw.iloc[:,5:]
 	# process covariates
@@ -92,7 +92,7 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,keep=None):
 	else: cov = None
 
 	# process phenotype files
-	phenotype = pd.read_csv(phenotype_file, sep=' ',index_col=0)
+	phenotype = pd.read_csv(phenotype_file, sep=' ',index_col=0).dropna()
 	if phenotype.shape[1] < 2: phenotype = phenotype.transpose()
 	phenotype_ind = phenotype.columns.tolist()
 

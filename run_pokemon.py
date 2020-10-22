@@ -1,8 +1,8 @@
 from lib.process import *
 from lib.score import *
 from lib.VCT import *
-from lib.plot import *
 import argparse
+import os 
 
 def main():
 
@@ -40,8 +40,9 @@ def main():
 	draw_figures = args.figures
 	
 	# default files
-	map_to_pdb_file = 'ref/pdbsws_chain'
-	pwm_file = 'ref/blosum62'
+	cwd = os.getcwd()
+	map_to_pdb_file = cwd + '/ref/pdbsws_chain'
+	pwm_file = cwd + '/ref/blosum62'
 	pwm = pd.read_csv(pwm_file,index_col=0,delim_whitespace=True)
 	
 	# generate input file
@@ -75,6 +76,7 @@ def main():
 		pdb = uniq_map.loc[iline,'structure']
 
 	if draw_figures: 
+		from lib.plot import score_on_var
 		score_on_var(genotype,snps2aa,phenotype,pdb)
 
 	# get distance matrix
