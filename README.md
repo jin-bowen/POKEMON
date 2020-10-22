@@ -36,15 +36,14 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
    
 **--genotype**: required  
    plink output with recode A option(The 'transpose' modifier).    
+   **note1: snp must be named as chr:pos:alt:ref (e.g., 6:41129275:G:C)**   
+   **note2: snps must be unique**  
+   
    The columns for genotype file is      
-
 | FID  | IID | PAT | MAT | SEX | PHENOTYPE | 6:41129275:G:C | ... | ... |
 | --- | --- | --- | --- |--- | --- | --- | --- | --- |
-| ... | ... | ... | ... | ... | ... | ... | ... | ... | 
+| ... | ... | ... | ... | ... | ... | ... | ... | ... |   
 
-   **note1: snp must be named as chr:pos:alt:ref (e.g., 6:41129275:G:C)**
-   **note2: snps must be unique**
-  
    A typical command to generate the genotype file:
 ```bash
 bcftools annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' <vcf file with genotype>  
@@ -54,8 +53,10 @@ plink --vcf <vcf file with genotype> --snps-only  --allow-no-sex --max-maf 0.05 
 # change the formart from chr:pos:ref:alt_alt -> chr:pos:ref:alt
 sed -i 's/_[A-Z]//g' test_gene.raw
 ```
+
 **--phenotype**: required  
    phenotype file  
+   **note: phenotypes must be unique**  
    
    format1 for testing with single phenotype: column1 for individuals, column2 for phenotype, seperated by space. 
 | ID  | pheno |
@@ -73,7 +74,7 @@ sed -i 's/_[A-Z]//g' test_gene.raw
 | ...  | ...  | ... | ... | ... |
 | pheno50  | 1  | 0 | ... | 1 |
 
-   **note: phenotypes must be unique**
+   
 
 
 **--cov_file**:  *optional*   
