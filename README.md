@@ -36,8 +36,14 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
    
 **--genotype**: required  
    plink output with recode A option(The 'transpose' modifier).    
-   The columns for genotype file is FID IID PAT MAT SEX PHENOTYPE <snp1> ... <snp2>    
-   **snp must be named as chr:pos:alt:ref (e.g., 6:41129275:G:C)**
+   The columns for genotype file is      
+
+| FID  | IID | PAT | MAT | SEX | PHENOTYPE | 6:41129275:G:C | ... | ... |
+| --- | --- | --- | --- |--- | --- | --- | --- | --- |
+| ... | ... | ... | ... | ... | ... | ... | ... | ... | 
+
+   **note1: snp must be named as chr:pos:alt:ref (e.g., 6:41129275:G:C)**
+   **note2: snps must be unique**
   
    A typical command to generate the genotype file:
 ```bash
@@ -48,7 +54,28 @@ plink --vcf <vcf file with genotype> --snps-only  --allow-no-sex --max-maf 0.05 
 # change the formart from chr:pos:ref:alt_alt -> chr:pos:ref:alt
 sed -i 's/_[A-Z]//g' test_gene.raw
 ```
+**--phenotype**: required  
+   phenotype file  
    
+   format1 for testing with single phenotype: column1 for individuals, column2 for phenotype, seperated by space. 
+| ID  | pheno |
+| --- | ---- |
+| name1  | 0  |
+| name2  | 1  | 
+| ...  | ...  |
+| name1000  | 0  |  
+
+   format2 for testing with multiple phenotypes: row for phenotypes, columns for individuals, seperated by space.   
+| pheno  | name1 | name2 | ... | name1000 |
+| --- | --- |--- |--- |---|
+| pheno1  | 1  | 0 | ... | 1 |
+| pheno2  | 1  | 0 | ... | 1 |
+| ...  | ...  | ... | ... | ... |
+| pheno50  | 1  | 0 | ... | 1 |
+
+   **note: phenotypes must be unique**
+
+
 **--cov_file**:  *optional*   
     covariate file.  
     the columns for covariate file are: FID IID <cov1> ... <cov2>
