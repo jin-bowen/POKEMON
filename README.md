@@ -11,9 +11,13 @@ see the instruction guide here: https://pypi.org/project/fastlmm/
 
 Required packages, usually installed if you use a anaconda distributed python:
 - biopython  
-see the instruction guide here: https://biopython.org/wiki/Download
+see the instruction here: https://biopython.org/wiki/Download
 - sklearn   
-see the instruction guide here: https://scikit-learn.org/stable/install.html
+see the instruction here: https://scikit-learn.org/stable/install.html
+
+Required pacakges if visualization is on:  
+-  pymol   
+pymol must be installed to use the flag --figures, see instruction here: https://pymol.org/2/  
 
 ### Installation
 ```bash
@@ -83,7 +87,7 @@ ${dir_to_vep}/vep -i <vcf file with genotype> --format vcf --cache --offline --d
 
 **--figures**: *optional*    
     if explicitly flagged, POKEMON will save pymol figures  
-    ** pymol must be installed to use this flag, see instruction here: https://pymol.org/2/**  
+    **pymol must be installed to use this flag**  
   
 **--out_file**: required  
     output file where the POKEMON will write  
