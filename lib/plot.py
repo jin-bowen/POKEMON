@@ -36,6 +36,8 @@ def score_on_var(genotype,snps2aa,phenotype,pdb):
 	pheno = phenotype.values.reshape((1,-1))
 	score = pheno.dot(geno).reshape(-1)
 	score = score / geno_sum
+	# normalize to [0,1]
+	score = score - min(score) / (max(score) - min(score))
 	
 	score_df = pd.DataFrame(index=genotype.columns)
 	score_df['es'] = score
