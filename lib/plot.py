@@ -5,8 +5,7 @@ import pandas as pd
 
 def plot(var, pdb_id):
 
-	pymol.finish_launching()
-
+	#pymol.finish_launching()
 	cmd.fetch(pdb_id)
 	cmd.alter(pdb_id, 'b = 0.5')
 	cmd.show_as('cartoon',pdb_id)
