@@ -75,9 +75,11 @@ def main():
 		iline = uniq_map['varcode'].argmax()
 		pdb = uniq_map.loc[iline,'structure']
 
+	fig_to_dir = out_file.split('/')[0:-1]
+	fig_to_dir = "/".join(fig_to_dir)
 	if draw_figures: 
 		from lib.plot import score_on_var
-		score_on_var(genotype,snps2aa,phenotype,pdb)
+		score_on_var(genotype,snps2aa,phenotype,pdb, fig_to_dir)
 
 	# get distance matrix
 	dist_mat_dict = cal_distance_mat(snps2aa, n_snp)

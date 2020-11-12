@@ -3,7 +3,7 @@ from pymol import cmd
 import numpy as np 
 import pandas as pd
 
-def plot(var, pdb_id):
+def plot(var, pdb_id, dir):
 
 	#pymol.finish_launching()
 	cmd.fetch(pdb_id)
@@ -23,10 +23,10 @@ def plot(var, pdb_id):
 	cmd.spectrum("b", "blue_white_red", "%s"%pdb_id, maximum=1.0, minimum=0.0)
 	cmd.bg_color("white")
 	cmd.zoom()
-	cmd.png('%s.png'%pdb_id, dpi=300)
-	cmd.save('%s.pse'%(pdb_id))
+	cmd.png('%s/%s.png'%(dir,pdb_id), dpi=300)
+	cmd.save('%s/%s.pse'%(dir,pdb_id))
 
-def score_on_var(genotype,snps2aa,phenotype,pdb):
+def score_on_var(genotype,snps2aa,phenotype,pdb,dir):
 
 	a = genotype.sum(axis=0)
 	b = pd.merge(a.to_frame(), snps2aa, left_index=True, right_on=['varcode'])
@@ -45,7 +45,7 @@ def score_on_var(genotype,snps2aa,phenotype,pdb):
 	snp_df = pd.merge(score_df, snps2aa,left_index=True, right_on='varcode')
 	snp_df_sub = snp_df[snp_df['structure']==pdb]
 
-	plot(snp_df_sub, pdb)
+	plot(snp_df_sub, pdb, dir)
 
 # main body
 if __name__ == "__main__":
