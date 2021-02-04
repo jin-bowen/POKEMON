@@ -35,13 +35,13 @@ def parser_vep(vep_input):
 
 	return csq_df_filter[['ID','Feature','SWISSPROT','Protein_position','Amino_acids']]
 
-def snps_to_aa(snps,gene_name,vep,map_to_pdb_file): 
+def snps_to_aa(snps,vep,map_to_pdb_file): 
 
 	ori_cols = ['ID','structure','chain','Protein_position','x','y','z','Amino_acids']
 	new_cols = ['varcode','structure','chain','structure_position','x','y','z','aa']
 	
-	map_to_pdb = pd.read_csv(map_to_pdb_file, header=None,sep=' ',index_col=False,\
-			names=['structure','chain','SWISSPROT'])
+	map_to_pdb = pd.read_csv(map_to_pdb_file,usecols=range(3),index_col=False,\
+			comment='#',header=0,names=['structure','chain','SWISSPROT'])
 	vep_mapping_processing = vep.loc[vep['ID'].isin(snps)]
 	vep_mapping = pd.merge(vep_mapping_processing, map_to_pdb, on='SWISSPROT')	
 
@@ -56,11 +56,12 @@ def snps_to_aa(snps,gene_name,vep,map_to_pdb_file):
 	parser = PDBParser()
 	structure_list = {}
 	for pdb in set(vep_mapping['structure'].values):
-		pdbl=PDBList()
-		pdbl.retrieve_pdb_file(pdb, pdir='ref/pdb', file_format='pdb',obsolete=False)
-		structure = parser.get_structure(pdb, "ref/pdb/pdb%s.ent"%pdb)
-		structure_list[pdb] = structure
-
+		try:
+			pdbl=PDBList()
+			pdbl.retrieve_pdb_file(pdb, pdir='ref/pdb', file_format='pdb',obsolete=False)
+			structure = parser.get_structure(pdb, "ref/pdb/pdb%s.ent"%pdb)
+			structure_list[pdb] = structure
+		except: continue
 	for irow, row in vep_mapping.iterrows():	
 		entry = row['structure']
 		chain = row['chain']
@@ -70,8 +71,7 @@ def snps_to_aa(snps,gene_name,vep,map_to_pdb_file):
 			atom = structure[0][chain][residue]["CA"]
 			coord = atom.get_coord()
 			vep_mapping.loc[irow,['x','y','z']] = coord
-		except:
-			continue
+		except: continue
 	out_df = vep_mapping[ori_cols]
 	out_df.columns = new_cols
 

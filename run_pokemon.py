@@ -41,7 +41,7 @@ def main():
 	
 	# default files
 	cwd = os.getcwd()
-	map_to_pdb_file = cwd + '/ref/pdbsws_chain'
+	map_to_pdb_file = cwd + '/ref/pdb_chain_uniprot.csv'
 	pwm_file = cwd + '/ref/blosum62'
 	pwm = pd.read_csv(pwm_file,index_col=0,delim_whitespace=True)
 	
@@ -55,7 +55,7 @@ def main():
 	idx_tab = pd.DataFrame()
 	idx_tab['id'] = list(range(n_snp))
 	idx_tab['varcode'] = snps
-	snps2aa_noidx = snps_to_aa(snps,gene_name,vep,map_to_pdb_file)
+	snps2aa_noidx = snps_to_aa(snps,vep,map_to_pdb_file)
 	snps2aa = pd.merge(snps2aa_noidx, idx_tab, on='varcode')
 
 	outf = open(out_file, "a+")
