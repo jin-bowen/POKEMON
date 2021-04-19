@@ -3,7 +3,8 @@ pokemon is a structure based variance component test for studying rare variants
 
 ## Setup
 ### Dependencies
-python > 3.6  
+python > 3.7
+gcc > 6.3.0
 
 Required package:
 - fastlmm  
