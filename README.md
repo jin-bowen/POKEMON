@@ -111,7 +111,7 @@ ${dir_to_vep}/vep -i <vcf file with genotype> --format vcf --cache --offline --d
 **--pdb**: *optional*   
     e.g., --pdb 5eli, POKEMON will run on the specificed protein:5eli rather the optimal one  
 
-**--use_aa**: *optional*  
+**--use_blosum**: *optional*  
     if explicitly flagged, the kernel will be further scaled by AA change weight from BLOSUM62 matrix  
 
 **--figures**: *optional*    
