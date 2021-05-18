@@ -29,7 +29,7 @@ cd POKEMON
 ```bash
 gene=ENST00000373113
 python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --cov_file test.cov \
---cov_list APOE4_dose,APOE2_dose --alpha 0 --use_aa --annotation ${gene}.csq --out_file results
+--cov_list APOE4_dose,APOE2_dose --alpha 0 --use_blosum --annotation ${gene}.csq --out_file results
 ```
 ### Flags:
 **--gene_name**: required  
