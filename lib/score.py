@@ -133,7 +133,7 @@ def weight_mat(freqs, distance_mat, aa_weight,use_aa=False,sim_fun='exponential'
 	return freq_w, struct_w, freq_struct_w  
 
 #######################################
-def cal_aa_weight(snps2aa_tot, pwm, n_snp):
+def cal_aa_weight(snps2aa_tot,pwm,n_snp,use_pwm=False,use_bfct=False):
 	"""
 	Deal with situation when a single snp are mapped to more than two different residues 
 	  in a protein structure. Maintain the smallest pairwise distance
@@ -147,8 +147,16 @@ def cal_aa_weight(snps2aa_tot, pwm, n_snp):
 	snps2aa_tot = snps2aa_tot.set_index('id')
 	snps2aa_tot[['ref_aa','alt_aa']] = snps2aa_tot['aa'].str.split('/', expand=True)
 
-	log_score = snps2aa_tot.apply(lambda x: pwm.loc[x['ref_aa'],x['alt_aa']], axis=1)
-	weight = log_score.apply(lambda x: np.exp(-x))
+	if use_pwm:
+		log_score = snps2aa_tot.apply(lambda x: pwm.loc[x['ref_aa'],x['alt_aa']], axis=1)
+		weight = log_score.apply(lambda x: np.exp(-x))
+	elif use_bfct:
+		weight = 1/snps2aa_tot['scaled_bfct']
+		print(weight)
+		weight = weight / min(weight)
+		print(weight)
+	else:
+		weight = np.ones(len(snps2aa_tot))
 
 	row = weight.index.tolist()
 	col = np.zeros(weight.shape[0])

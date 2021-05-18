@@ -15,7 +15,8 @@ def main():
 	parser.add_argument("--annotation", type=str,help="snp to AA mapping reference")
 	parser.add_argument("--ref_pdb_dir", type=str,help="AA coordinate reference")
 	parser.add_argument("--alpha", type=str, help="proportion of frequency kernel involved")
-	parser.add_argument("--use_aa", action='store_true')
+	parser.add_argument("--use_blosum", action='store_true')
+	parser.add_argument("--use_bfactor", action='store_true')
 	parser.add_argument("--out_file", type=str, help="output file")
 	parser.add_argument("--pdb", type=str, default=None)
 	parser.add_argument("--figures", action='store_true')
@@ -34,7 +35,10 @@ def main():
 	ref_pdb_dir   = args.ref_pdb_dir
 	alpha         = args.alpha
 	out_file      = args.out_file
-	use_aa_bool   = args.use_aa
+	use_blosum_bool  = args.use_blosum
+	use_bfactor_bool = args.use_bfactor
+	use_aa_bool   = args.use_blosum & args.use_bfactor
+
 	if args.pdb: pdb = args.pdb
 	else: pdb = None
 	draw_figures = args.figures
@@ -79,14 +83,19 @@ def main():
 	fig_to_dir = "/".join(fig_to_dir)
 	if draw_figures: 
 		from lib.plot import score_on_var
-		score_on_var(genotype,snps2aa,phenotype,pdb, fig_to_dir)
+		score_on_var(genotype,snps2aa,phenotype,pdb,fig_to_dir)
 
+	#obj = open('%s_%s.pkl'%(gene_name,pdb),'wb')
+	#pickle.dump(genotype, obj)
+	#pickle.dump(phenotype, obj)
+	#pickle.dump(snps2aa, obj)
+	
 	# get distance matrix
 	dist_mat_dict = cal_distance_mat(snps2aa, n_snp)
 	distance_mat = dist_mat_dict.get(pdb)
 
 	# variants weight induced by aa change
-	aa_weight = cal_aa_weight(snps2aa, pwm, n_snp) 
+	aa_weight = cal_aa_weight(snps2aa,pwm,n_snp,use_pwm=use_blosum_bool,use_bfct=use_bfactor_bool) 
 
 	# generate the score matrix based on frequency and distance
 	# alpha=1: freq only; alpha=0: struct only
