@@ -43,7 +43,8 @@ def snps_to_aa(snps,vep,map_to_pdb_file):
 	map_to_pdb = pd.read_csv(map_to_pdb_file,usecols=range(3),index_col=False,\
 			comment='#',header=0,names=['structure','chain','SWISSPROT'])
 	vep_mapping_processing = vep.loc[vep['ID'].isin(snps)]
-	vep_mapping = pd.merge(vep_mapping_processing, map_to_pdb, on='SWISSPROT')	
+	vep_mapping_processing['SWISSPROT'] = vep_mapping_processing['SWISSPROT'].str.split('.').str[0]
+	vep_mapping = pd.merge(vep_mapping_processing, map_to_pdb, on='SWISSPROT')
 
 	if len(vep_mapping['structure']) == 0: 
 		print("no PDB structure mapped to snps")
@@ -83,13 +84,13 @@ def snps_to_aa(snps,vep,map_to_pdb_file):
 def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,keep=None):
 
 	# process genotype file
-	genotype_raw=pd.read_csv(genotype_file, sep=' ')
+	genotype_raw=pd.read_csv(genotype_file, sep='\s+|\t')
 	genotype_raw.set_index('IID', inplace=True)
 	genotype_raw.fillna(0, inplace=True)
 	genotype = genotype_raw.iloc[:,5:]
 	# process covariates
 	if cov_file:
-		cov_raw = pd.read_csv(cov_file, sep=' ')
+		cov_raw = pd.read_csv(cov_file, sep='\s+|\t')
 		cov_raw.set_index('IID', inplace=True)
 		cov = cov_raw.loc[:,cov_list]
 	else: cov = None

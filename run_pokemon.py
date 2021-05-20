@@ -53,7 +53,6 @@ def main():
 	genotype,freqs,phenotype,cov = \
 	  parser_vcf(genotype_file,phenotype_file,cov_file,cov_list)
 	vep = parser_vep(annotation)
-
 	snps = genotype.columns.tolist()
 	n_snp = len(snps)
 	idx_tab = pd.DataFrame()

@@ -152,18 +152,16 @@ def cal_aa_weight(snps2aa_tot,pwm,n_snp,use_pwm=False,use_bfct=False):
 		weight = log_score.apply(lambda x: np.exp(-x))
 	elif use_bfct:
 		weight = 1/snps2aa_tot['scaled_bfct']
-		print(weight)
 		weight = weight / min(weight)
-		print(weight)
 	else:
-		weight = np.ones(len(snps2aa_tot))
+		weight = pd.Series(data=np.ones(len(snps2aa_tot)), index=snps2aa_tot.index.tolist())
 
 	row = weight.index.tolist()
 	col = np.zeros(weight.shape[0])
 	data = weight.values
 	aa_weight_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,1)).toarray()
 	aa_weight_mat[aa_weight_mat == 0.0] = 1
-
+	print(aa_weight_mat)
 	return np.sqrt(aa_weight_mat)
 
 #######################################
