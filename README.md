@@ -60,15 +60,15 @@ sed -i 's/_[A-Z]//g' test_gene.raw
    phenotype file  
    **note: phenotypes must be unique**  
    
-   format1 for testing with single phenotype: column1 for individuals, column2 for phenotype, seperated by space. 
-| ID  | pheno |
+   format1 for testing with single phenotype: column1 for individuals, column2 for phenotype, seperated by space/tab/comma. 
+| sample_id  | pheno |
 | --- | ---- |
 | name1  | 0  |
 | name2  | 1  | 
 | ...  | ...  |
 | name1000  | 0  |  
 
-   format2 for testing with multiple phenotypes: row for phenotypes, columns for individuals, seperated by space.   
+   format2 for testing with multiple phenotypes: row for phenotypes, columns for individuals, seperated by space/tab/comma.   
 | pheno  | name1 | name2 | ... | name1000 |
 | --- | --- |--- |--- |---|
 | pheno1  | 1  | 0 | ... | 1 |
@@ -76,18 +76,13 @@ sed -i 's/_[A-Z]//g' test_gene.raw
 | ...  | ...  | ... | ... | ... |
 | pheno50  | 1  | 0 | ... | 1 |
 
-   
 
 
 **--cov_file**:  *optional*   
     covariate file.  
-    the columns for covariate file are: FID IID <cov1> ... <cov2>
+    the columns for covariate file are: sample_id <cov1> ... <cov2>
     A typical command to generate the covariate file:  
 
-``` 
-${dir_to_plink}/plink --vcf <vcf file with genotype> --allow-no-sex --covar <vcf file with genotype> \  
- --prune --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene 
-```
 
 **--cov_list**: *optional, but compulsory if --cov_file is used*   
     covariates to be used  

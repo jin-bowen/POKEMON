@@ -146,7 +146,6 @@ def cal_aa_weight(snps2aa_tot,pwm,n_snp,use_pwm=False,use_bfct=False):
 	"""
 	snps2aa_tot = snps2aa_tot.set_index('id')
 	snps2aa_tot[['ref_aa','alt_aa']] = snps2aa_tot['aa'].str.split('/', expand=True)
-
 	if use_pwm:
 		log_score = snps2aa_tot.apply(lambda x: pwm.loc[x['ref_aa'],x['alt_aa']], axis=1)
 		weight = log_score.apply(lambda x: np.exp(-x))
@@ -154,14 +153,14 @@ def cal_aa_weight(snps2aa_tot,pwm,n_snp,use_pwm=False,use_bfct=False):
 		weight = 1/snps2aa_tot['scaled_bfct']
 		weight = weight / min(weight)
 	else:
-		weight = pd.Series(data=np.ones(len(snps2aa_tot)), index=snps2aa_tot.index.tolist())
+		weight = pd.Series(data=np.ones(len(snps2aa_tot)),
+			index=snps2aa_tot.index.tolist())	
 
 	row = weight.index.tolist()
 	col = np.zeros(weight.shape[0])
 	data = weight.values
 	aa_weight_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,1)).toarray()
 	aa_weight_mat[aa_weight_mat == 0.0] = 1
-	print(aa_weight_mat)
 	return np.sqrt(aa_weight_mat)
 
 #######################################

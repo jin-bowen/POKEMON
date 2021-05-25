@@ -88,7 +88,11 @@ def main():
 	#pickle.dump(genotype, obj)
 	#pickle.dump(phenotype, obj)
 	#pickle.dump(snps2aa, obj)
-	
+	#print(len(genotype.columns.tolist()))
+	#print(n_snp)
+	#print(snps2aa.loc[snps2aa['structure']==pdb,'varcode'].nunique())
+	#return 0
+
 	# get distance matrix
 	dist_mat_dict = cal_distance_mat(snps2aa, n_snp)
 	distance_mat = dist_mat_dict.get(pdb)

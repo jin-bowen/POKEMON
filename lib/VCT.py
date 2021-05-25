@@ -50,7 +50,7 @@ class VCT:
 		return nominators / denonimators 
 
 	def compute_p_value(self, r, acc):
-		return self.davies(r, self.phis[np.where(self.phis > 1e-10)], acc)
+		return self.davies(r, self.phis[np.where(self.phis > 1e-8)], acc)
 
 	def davies(self, squaredform, eigvals, acc):
 		max_mag = -np.log10(acc)
@@ -87,7 +87,7 @@ class VCT:
 		self.SKS = self.K.dot(self.S).T
 		self.SKS = self.SKS.astype('float32')
 		self.SKS = sp.linalg.blas.dgemm(alpha=1.0,a=self.SKS,b=self.S)
-
+			
 		rank = min(self.n, self.m) - 1
 		self.phis = sparse.linalg.eigsh(self.SKS, k=rank, return_eigenvectors=False)	
-		self.phis = np.sort(self.phis)[::-1]	
+		self.phis = np.sort(self.phis)[::-1]
