@@ -3,9 +3,9 @@ pokemon is a structure based variance component test for studying rare variants
 
 ## Setup
 ### Dependencies
-python > 3.7  
+- python > 3.7  
 
-gcc > 6.3.0
+- gcc > 6.3.0
 
 Required package:
 - fastlmm  
@@ -77,22 +77,23 @@ sed -i 's/_[A-Z]//g' test_gene.raw
 | pheno50  | 1  | 0 | ... | 1 |
 
 
-
 **--cov_file**:  *optional*   
     covariate file.  
-    the columns for covariate file are: sample_id <cov1> ... <cov2>
-    A typical command to generate the covariate file:  
+    the columns for covariate file are: sample_id <cov1> ... <cov2>  
 
 
 **--cov_list**: *optional, but compulsory if --cov_file is used*   
     covariates to be used  
-    **covariate must be present in the columns for covariate file**  
+    **note: covariate must be present in the columns for covariate file**  
  
 **--annotation**: required  
     Consequence annotations from Ensembl VEP __with vcf format__  
-    INFO columns must contains CANONICAL|SWISSPROT|Amino_acids|Protein_position(can be easily achieved when run vep with outputing everything)    
-    A typical script to generate the annotation file:  
+    INFO columns must contains **CANONICAL|SWISSPROT|Amino_acids|Protein_position**  
+    (can be easily achieved when run vep with outputing everything)    
+     A typical script to generate the annotation file:     
 
+
+ 
 ```    
 ${dir_to_vep}/vep -i <vcf file with genotype> --format vcf --cache --offline --dir <dir to cache> \
 --check_existing --symbol --protein --uniprot --domains --canonical --biotype --pubmed --coding_only --assembly GRCh37 \
@@ -112,7 +113,7 @@ ${dir_to_vep}/vep -i <vcf file with genotype> --format vcf --cache --offline --d
 
 **--figures**: *optional*    
     if explicitly flagged, POKEMON will save pymol figures  
-    **pymol must be installed to use this flag**  
+    **note: pymol must be installed to use this flag**  
   
 **--out_file**: required  
     output file where the POKEMON will write  
