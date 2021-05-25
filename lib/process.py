@@ -95,7 +95,7 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,keep=None):
 	else: cov = None
 
 	# process phenotype files
-	phenotype = pd.read_csv(phenotype_file, sep=' ',index_col=0)
+	phenotype = pd.read_csv(phenotype_file, sep='\s+|\t|,',index_col=0)
 	phenotype.dropna(inplace=True)
 	if phenotype.shape[1] < 2: phenotype = phenotype.transpose()
 	phenotype_ind = phenotype.columns.tolist()
