@@ -50,8 +50,7 @@ def main():
 	pwm = pd.read_csv(pwm_file,index_col=0,delim_whitespace=True)
 	
 	# generate input file
-	genotype,freqs,phenotype,cov = \
-	  parser_vcf(genotype_file,phenotype_file,cov_file,cov_list)
+	genotype,freqs,phenotype,cov = parser_vcf(genotype_file,phenotype_file,cov_file,cov_list)
 	vep = parser_vep(annotation)
 	snps = genotype.columns.tolist()
 	n_snp = len(snps)
@@ -78,21 +77,6 @@ def main():
 		iline = uniq_map['varcode'].argmax()
 		pdb = uniq_map.loc[iline,'structure']
 
-	fig_to_dir = out_file.split('/')[0:-1]
-	fig_to_dir = "/".join(fig_to_dir)
-	if draw_figures: 
-		from lib.plot import score_on_var
-		score_on_var(genotype,snps2aa,phenotype,pdb,fig_to_dir)
-
-	#obj = open('%s_%s.pkl'%(gene_name,pdb),'wb')
-	#pickle.dump(genotype, obj)
-	#pickle.dump(phenotype, obj)
-	#pickle.dump(snps2aa, obj)
-	#print(len(genotype.columns.tolist()))
-	#print(n_snp)
-	#print(snps2aa.loc[snps2aa['structure']==pdb,'varcode'].nunique())
-	#return 0
-
 	# get distance matrix
 	dist_mat_dict = cal_distance_mat(snps2aa, n_snp)
 	distance_mat = dist_mat_dict.get(pdb)
@@ -104,6 +88,20 @@ def main():
 	# alpha=1: freq only; alpha=0: struct only
 	freq_w, struct_w, combined_w = \
 	 weight_mat(freqs.values,distance_mat,aa_weight,use_aa=use_aa_bool,alpha=float(alpha))
+
+	outname = gene_name + '_' + pdb
+#	obj = open('%s.pkl'%outname,'wb')
+#	pickle.dump(genotype, obj)
+#	pickle.dump(phenotype,obj)
+#	pickle.dump(snps2aa,  obj)
+#	pickle.dump(distance_mat,obj)	
+
+	if draw_figures: 
+		from lib.cluster import cluster
+		cls = cluster(genotype,snps2aa,phenotype,distance_mat,pdb)
+		cls.cluster_analysis()
+		cls.plot(outname)
+		cls.plot_cluster(outname)
 
 	# calculate kernel based on the score matrix
 	K = cal_Kernel(combined_w, genotype)

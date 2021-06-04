@@ -84,18 +84,18 @@ def snps_to_aa(snps,vep,map_to_pdb_file):
 def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,keep=None):
 
 	# process genotype file
-	genotype_raw=pd.read_csv(genotype_file, sep='\s+|\t|,',engine='python',index_col=0)
+	genotype_raw=pd.read_csv(genotype_file,sep='\s+|\t|,',engine='python',index_col=0)
 	genotype_raw.fillna(0,inplace=True)
 	genotype = genotype_raw.iloc[:,5:]
 	# process covariates
 	if cov_file:
-		cov_raw = pd.read_csv(cov_file, sep='\s+|\t|,',engine='python',index_col=0)
+		cov_raw = pd.read_csv(cov_file,sep='\s+|\t|,',engine='python',index_col=0)
 		cov_raw.dropna(inplace=True)
 		cov = cov_raw.loc[:,cov_list]
 	else: cov = None
 
 	# process phenotype files
-	phenotype = pd.read_csv(phenotype_file, sep='\s+|\t|,',index_col=0)
+	phenotype = pd.read_csv(phenotype_file,sep='\s+|\t|,',engine='python',index_col=0)
 	phenotype.dropna(inplace=True)
 	if phenotype.shape[1] < 2: phenotype = phenotype.transpose()
 	phenotype_ind = phenotype.columns.tolist()
