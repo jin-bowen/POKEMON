@@ -16,19 +16,18 @@ def parser_vep(vep_input):
 				vcf_header = vcf_header_raw[0:8]
 	vep_df = pd.read_csv(vep_input,comment='#',sep='\t',header=None,names=vcf_header, \
 				usecols=range(8))
-	
 	temp_df = vep_df['INFO'].str.split(',', expand=True).add_prefix('csq')
 	vep_df = vep_df.join(temp_df)
 	temp_header = temp_df.columns
 
 	csq_df = vep_df.melt(id_vars=vcf_header, value_vars=temp_header,value_name='csq')
 	temp_df = csq_df['csq'].str.split('|',expand=True)
+	if temp_df.shape[1] < len(csq_header): return pd.DataFrame()
 	temp_df.columns = csq_header
-
+	
 	csq_df[csq_header] = temp_df[csq_header]
 	csq_df_filter = csq_df[ (csq_df['Consequence']=='missense_variant') & \
-		(csq_df['CANONICAL']=='YES')]
-
+				(csq_df['CANONICAL']=='YES')]
 	pdbentry = csq_df_filter['SWISSPROT'].str.split('_',1, expand=True)
 	csq_df_filter.loc[:,'SWISSPROT'] = pdbentry[0]
 	csq_df_filter.loc[:,'ID']=csq_df_filter[['#CHROM','POS','REF','ALT']].astype(str).agg(':'.join,axis=1)

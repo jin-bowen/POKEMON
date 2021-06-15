@@ -146,6 +146,7 @@ def cal_aa_weight(snps2aa_tot,pwm,n_snp,use_pwm=False,use_bfct=False):
 	"""
 	snps2aa_tot = snps2aa_tot.set_index('id')
 	snps2aa_tot[['ref_aa','alt_aa']] = snps2aa_tot['aa'].str.split('/', expand=True)
+
 	if use_pwm:
 		log_score = snps2aa_tot.apply(lambda x: pwm.loc[x['ref_aa'],x['alt_aa']], axis=1)
 		weight = log_score.apply(lambda x: np.exp(-x))

@@ -50,7 +50,7 @@ class VCT:
 		return nominators / denonimators 
 
 	def compute_p_value(self, r, acc):
-		return self.davies(r, self.phis[np.where(self.phis > 1e-8)], acc)
+		return self.davies(r, self.phis[np.where(self.phis > 1e-10)], acc)
 
 	def davies(self, squaredform, eigvals, acc):
 		max_mag = -np.log10(acc)
