@@ -36,8 +36,8 @@ def parser_vep(vep_input):
 
 def snps_to_aa(snps,vep,map_to_pdb_file): 
 
-	ori_cols = ['ID','structure','chain','Protein_position','x','y','z','Amino_acids','scaled_bfct']
-	new_cols = ['varcode','structure','chain','structure_position','x','y','z','aa','scaled_bfct']
+	ori_cols = ['ID','structure','chain','Protein_position','x','y','z','Amino_acids']
+	new_cols = ['varcode','structure','chain','structure_position','x','y','z','aa']
 	
 	map_to_pdb = pd.read_csv(map_to_pdb_file,usecols=range(3),index_col=False,\
 			comment='#',header=0,names=['structure','chain','SWISSPROT'])
@@ -71,9 +71,9 @@ def snps_to_aa(snps,vep,map_to_pdb_file):
 			resol = structure.header["resolution"]
 			atom  = structure[0][chain][residue]["CA"]
 			coord = atom.get_coord()
-			bfct  = atom.get_bfactor() / (resol*resol)
+			#bfct  = atom.get_bfactor() / (resol*resol)
 			vep_mapping.loc[irow,['x','y','z']] = coord
-			vep_mapping.loc[irow,'scaled_bfct'] = bfct
+			#vep_mapping.loc[irow,'scaled_bfct'] = bfct
 		except: continue
 	out_df = vep_mapping[ori_cols]
 	out_df.columns = new_cols

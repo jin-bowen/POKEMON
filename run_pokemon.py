@@ -16,7 +16,6 @@ def main():
 	parser.add_argument("--ref_pdb_dir", type=str,help="AA coordinate reference")
 	parser.add_argument("--alpha", type=str, help="proportion of frequency kernel involved")
 	parser.add_argument("--use_blosum", action='store_true')
-	parser.add_argument("--use_bfactor", action='store_true')
 	parser.add_argument("--out_file", type=str, help="output file")
 	parser.add_argument("--pdb", type=str, default=None)
 	parser.add_argument("--figures", action='store_true')
@@ -36,8 +35,6 @@ def main():
 	alpha         = args.alpha
 	out_file      = args.out_file
 	use_blosum_bool  = args.use_blosum
-	use_bfactor_bool = args.use_bfactor
-	use_aa_bool   = args.use_blosum | args.use_bfactor
 
 	if args.pdb: pdb = args.pdb
 	else: pdb = None
@@ -64,11 +61,6 @@ def main():
 	if snps2aa.empty: 
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
-	# if there is only one element in the kernel
-	# do not execute the calculation
-	if genotype.shape[1] < 3:
-		outf.write('%s\tNA\tNA\n'%gene_name)
-		return None
 
 	# find the protein with most varaints mapped
 	if not pdb:
@@ -81,33 +73,37 @@ def main():
 	distance_mat = dist_mat_dict.get(pdb)
 
 	# variants weight induced by aa change
-	aa_weight = cal_aa_weight(snps2aa,pwm,n_snp,use_pwm=use_blosum_bool,use_bfct=use_bfactor_bool) 
+	aa_weight = cal_aa_weight(snps2aa,pwm,n_snp,use_pwm=use_blosum_bool)
 	# generate the score matrix based on frequency and distance
 
 	# alpha=1: freq only; alpha=0: struct only
 	freq_w, struct_w, combined_w = \
-		weight_mat(freqs.values,distance_mat,aa_weight,use_aa=use_aa_bool,alpha=float(alpha))
+		weight_mat(freqs.values,distance_mat,aa_weight,use_aa=use_blosum_bool,alpha=float(alpha))
 
 	snps2aa = snps2aa[snps2aa['structure']==pdb]
 	snps_sum = genotype.sum(axis=0)
 	snps_sum = snps_sum[snps_sum>0]
 	snps2aa_subset = snps2aa.merge(snps_sum.to_frame(),left_on='varcode',right_index=True)
 
-#	if snps2aa_subset.shape[0] > 3:
-#		outname = gene_name + '_' + pdb
-#		obj = open('%s.pkl'%outname,'wb')
-#		pickle.dump(genotype, obj)
-#		pickle.dump(phenotype,obj)
-#		pickle.dump(snps2aa,  obj)
-#		pickle.dump(distance_mat,obj)	
+	# if there is only one element in the kernel
+	# do not execute the calculation
+	if snps2aa_subset.shape[0] < 5:
+		outf.write('%s\tNA\tNA\n'%gene_name)
+		return None
 
-#	if draw_figures: 
-#		from lib.cluster import cluster
-#		cls = cluster(genotype,snps2aa,phenotype,distance_mat,pdb)
-#		cls.cluster_analysis()
-#		cls.plot(outname)
-#		cls.plot_cluster(outname)
+#	outname = gene_name + '_' + pdb
+#	obj = open('%s.pkl'%outname,'wb')
+#	pickle.dump(genotype, obj)
+#	pickle.dump(phenotype,obj)
+#	pickle.dump(snps2aa,  obj)
+#	pickle.dump(distance_mat,obj)	
 #	return 0
+
+	if draw_figures: 
+		from lib.cluster import cluster
+		cls = cluster(genotype,snps2aa,phenotype,distance_mat,pdb)
+		cls.plot(outname)
+		cls.plot_cluster(outname)
 
 	# calculate kernel based on the score matrix
 	K = cal_Kernel(combined_w, genotype)
