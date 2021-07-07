@@ -4,6 +4,20 @@ import numpy as np
 import os.path
 import re
 
+def percent(genotype, phenotype,snps2aa):
+	geno  = genotype.values
+	geno_sum = geno.sum(axis=0)
+	pheno = phenotype.values.reshape((1,-1))
+
+	percent = pheno.dot(geno).reshape(-1)
+	percent = percent / geno_sum
+
+	percent_df = pd.DataFrame(index=genotype.columns)
+	percent_df['es'] = percent
+	snp_df = pd.merge(percent_df, snps2aa,left_index=True, right_on='varcode')
+	
+	return snp_df
+
 def parser_vep(vep_input):
 	
 	with open(vep_input)as in_file:
@@ -80,7 +94,7 @@ def snps_to_aa(snps,vep,map_to_pdb_file):
 
 	return	out_df.dropna().drop_duplicates().reset_index(drop=True)
 
-def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,keep=None):
+def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq=None):
 
 	# process genotype file
 	genotype_raw=pd.read_csv(genotype_file,sep='\s+|\t|,',engine='python',index_col=0)
@@ -107,10 +121,15 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,keep=None):
 		cov = cov.loc[individual]
 
 	## calculate freq
-	freqs = genotype.sum(axis=0) 
-	freqs = freqs /(2 * genotype_raw.shape[0])
-
-	return genotype.loc[individual],freqs,phenotype[individual], cov
+	freqs_df = genotype.sum(axis=0) 
+	freqs_df = freqs_df /(2 * genotype_raw.shape[0])
+	if freq:
+		freqs_subset = freqs_df[freqs_df < freq]
+		snps = freqs_subset.index.tolist()
+	else:
+		freqs_subset = freqs_df
+		snps = freqs_subset.index.tolist()
+	return genotype.loc[individual,snps],freqs_subset,phenotype[individual], cov
 
 if __name__ == "__main__":
 	main()

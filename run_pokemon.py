@@ -19,6 +19,8 @@ def main():
 	parser.add_argument("--out_file", type=str, help="output file")
 	parser.add_argument("--pdb", type=str, default=None)
 	parser.add_argument("--figures", action='store_true')
+	parser.add_argument("--freq",type=float,default=None)
+
 	args = parser.parse_args()
 
 	gene_name      = args.gene_name
@@ -35,6 +37,7 @@ def main():
 	alpha         = args.alpha
 	out_file      = args.out_file
 	use_blosum_bool  = args.use_blosum
+	freq_filter   = args.freq
 
 	if args.pdb: pdb = args.pdb
 	else: pdb = None
@@ -47,7 +50,7 @@ def main():
 	pwm = pd.read_csv(pwm_file,index_col=0,delim_whitespace=True)
 	
 	# generate input file
-	genotype,freqs,phenotype,cov = parser_vcf(genotype_file,phenotype_file,cov_file,cov_list)
+	genotype,freqs,phenotype,cov = parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq_filter)
 	vep = parser_vep(annotation)
 	snps = genotype.columns.tolist()
 	n_snp = len(snps)
@@ -87,16 +90,20 @@ def main():
 
 	# if there is only one element in the kernel
 	# do not execute the calculation
-	if snps2aa_subset.shape[0] < 5:
+	if snps2aa_subset['varcode'].nunique() < 5:
+		outf.write('%s\tNA\tNA\n'%gene_name)
+		return None
+	percent_df = percent(genotype, phenotype, snps2aa_subset)
+	if np.all(percent_df['es']<0.5) or np.all(percent_df['es']>0.5):
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
 
-#	outname = gene_name + '_' + pdb
-#	obj = open('%s.pkl'%outname,'wb')
-#	pickle.dump(genotype, obj)
-#	pickle.dump(phenotype,obj)
-#	pickle.dump(snps2aa,  obj)
-#	pickle.dump(distance_mat,obj)	
+	outname = gene_name + '_' + pdb
+	obj = open('%s.pkl'%outname,'wb')
+	pickle.dump(genotype, obj)
+	pickle.dump(phenotype,obj)
+	pickle.dump(snps2aa,  obj)
+	pickle.dump(distance_mat,obj)	
 #	return 0
 
 	if draw_figures: 
@@ -115,7 +122,7 @@ def main():
 
 	for lab, ipheno in phenotype.iterrows():
 		temp = ipheno.values.astype(np.float)
-		pval = obj.test(temp, acc=1e-15)	
+		pval = obj.test(temp, acc=1e-8)	
 		record = [gene_name, pdb,lab, str(pval)]
 		outf.write('\t'.join(record) + '\n')
 	

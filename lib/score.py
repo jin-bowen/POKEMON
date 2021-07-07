@@ -150,6 +150,9 @@ def cal_aa_weight(snps2aa_tot,pwm,n_snp,use_pwm=False):
 	if use_pwm:
 		log_score = snps2aa_tot.apply(lambda x: pwm.loc[x['ref_aa'],x['alt_aa']], axis=1)
 		weight = log_score.apply(lambda x: np.exp(-x))
+	elif use_bfct:
+		weight = 1/snps2aa_tot['scaled_bfct']
+		weight = weight / min(weight)
 	else:
 		weight = pd.Series(data=np.ones(len(snps2aa_tot)),
 			index=snps2aa_tot.index.tolist())	

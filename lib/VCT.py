@@ -1,6 +1,7 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
-import fastlmm.util.stats.quadform as qf
+from fastlmm.util.stats.quadform.qfc_src import wrap_qfc
+from chi2comb import chi2comb_cdf, ChiSquared
 import numpy as np
 import scipy as sp
 from scipy import sparse
@@ -53,24 +54,27 @@ class VCT:
 		return self.davies(r, self.phis[np.where(self.phis > 1e-10)], acc)
 
 	def davies(self, squaredform, eigvals, acc):
-		max_mag = -np.log10(acc)
-		pval = 1.0
-		for i in reversed(range(int(max_mag)+1)):
-			acc = np.power(10,float(-i))
-			ipval, ifalse, trace = qf.qf(squaredform, eigvals, acc=acc,lim=20000)
-			if ifalse == 0: 
-				pval = ipval
-				break
+		sigma = 0.0
+		lim=np.floor(1/acc)
+		coeffs=eigvals
+		chi2val=squaredform
+	
+		size = coeffs.shape[0]
+		dof = np.ones(size,dtype = 'int32')
+		noncentrality = np.zeros(size)
+		ifault=np.zeros(1,dtype = 'int32')
+		trace = np.zeros(7)
+		ipval = 1.0-wrap_qfc.qf(coeffs,noncentrality,dof,sigma,chi2val,lim,acc,trace,ifault)
 		return ipval
 
-	def test(self, phenotypes, acc=1e-6):
+	def test(self, phenotypes, acc=1e-4):
 
 		scores = self.compute_scores(phenotypes)
 		pvals = self.compute_p_value(scores, acc)
 		return pvals
 
 	def __init__(self, kernel_matrix=None, fixed_covariates=None, num_var=None,\
-			zero_threshold=1e-8, phis=None):
+			zero_threshold=1e-10, phis=None):
 		self.K = kernel_matrix.astype('float32')
 		self.n = np.shape(self.K)[0]
 		self.m = int(num_var)
