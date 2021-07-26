@@ -19,7 +19,9 @@ def main():
 	parser.add_argument("--out_file", type=str, help="output file")
 	parser.add_argument("--pdb", type=str, default=None)
 	parser.add_argument("--figures", action='store_true')
-	parser.add_argument("--freq",type=float,default=None)
+	parser.add_argument("--maf",type=float,default=None)
+	parser.add_argument("--database",type=str,default='pdb',\
+			help="can be pdb or alphafold, default as pdb")
 
 	args = parser.parse_args()
 
@@ -37,7 +39,8 @@ def main():
 	alpha         = args.alpha
 	out_file      = args.out_file
 	use_blosum_bool  = args.use_blosum
-	freq_filter   = args.freq
+	freq_filter   = args.maf
+	database      = args.database
 
 	if args.pdb: pdb = args.pdb
 	else: pdb = None
@@ -50,14 +53,15 @@ def main():
 	pwm = pd.read_csv(pwm_file,index_col=0,delim_whitespace=True)
 	
 	# generate input file
-	genotype,freqs,phenotype,cov = parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq_filter)
+	genotype,freqs,phenotype,cov = \
+		parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq_filter)
 	vep = parser_vep(annotation)
 	snps = genotype.columns.tolist()
 	n_snp = len(snps)
 	idx_tab = pd.DataFrame()
 	idx_tab['id'] = list(range(n_snp))
 	idx_tab['varcode'] = snps
-	snps2aa_noidx = snps_to_aa(snps,vep,map_to_pdb_file)
+	snps2aa_noidx = snps_to_aa(snps,vep,map_to_pdb_file,database=database)
 	snps2aa = pd.merge(snps2aa_noidx, idx_tab, on='varcode')
 	outf = open(out_file, "a+")
 	# no structure mapped 
@@ -84,6 +88,7 @@ def main():
 		weight_mat(freqs.values,distance_mat,aa_weight,use_aa=use_blosum_bool,alpha=float(alpha))
 
 	snps2aa = snps2aa[snps2aa['structure']==pdb]
+
 	snps_sum = genotype.sum(axis=0)
 	snps_sum = snps_sum[snps_sum>0]
 	snps2aa_subset = snps2aa.merge(snps_sum.to_frame(),left_on='varcode',right_index=True)
@@ -98,12 +103,13 @@ def main():
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
 
-	outname = gene_name + '_' + pdb
-	obj = open('%s.pkl'%outname,'wb')
-	pickle.dump(genotype, obj)
-	pickle.dump(phenotype,obj)
-	pickle.dump(snps2aa,  obj)
-	pickle.dump(distance_mat,obj)	
+#	outname = gene_name + '_' + pdb
+#	obj = open('%s.pkl'%outname,'wb')
+#	pickle.dump(genotype, obj)
+#	pickle.dump(phenotype,obj)
+#	pickle.dump(snps2aa,  obj)
+#	pickle.dump(distance_mat,obj)	
+#	obj.close()
 #	return 0
 
 	if draw_figures: 
