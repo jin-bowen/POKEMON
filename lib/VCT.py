@@ -1,7 +1,6 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
-from fastlmm.util.stats.quadform.qfc_src import wrap_qfc
-from chi2comb import chi2comb_cdf, ChiSquared
+from fastlmmclib.quadform.qfc_src import wrap_qfc
 import numpy as np
 import scipy as sp
 from scipy import sparse
