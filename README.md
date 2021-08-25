@@ -33,7 +33,7 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
 ```
 ## Flags:
 **--gene_name**: required  
-   ensemble ID, used for mapping snp from gene to protein  
+   A label used as gene name in the output result file 
    
 **--genotype**: required  
    plink output with recode A option(The 'transpose' modifier).    

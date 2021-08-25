@@ -127,7 +127,7 @@ def main():
 	else: obj = VCT(K, num_var=m)
 
 	for lab, ipheno in phenotype.iterrows():
-		temp = ipheno.values.astype(np.float)
+		temp = ipheno.values.astype(np.float64)
 		pval = obj.test(temp, acc=1e-8)	
 		record = [gene_name, pdb,lab, str(pval)]
 		outf.write('\t'.join(record) + '\n')
