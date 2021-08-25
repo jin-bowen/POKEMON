@@ -150,9 +150,9 @@ def cal_aa_weight(snps2aa_tot,pwm,n_snp,use_pwm=False):
 	if use_pwm:
 		log_score = snps2aa_tot.apply(lambda x: pwm.loc[x['ref_aa'],x['alt_aa']], axis=1)
 		weight = log_score.apply(lambda x: np.exp(-x))
-	elif use_bfct:
-		weight = 1/snps2aa_tot['scaled_bfct']
-		weight = weight / min(weight)
+#	elif use_bfct:
+#		weight = 1/snps2aa_tot['scaled_bfct']
+#		weight = weight / min(weight)
 	else:
 		weight = pd.Series(data=np.ones(len(snps2aa_tot)),
 			index=snps2aa_tot.index.tolist())	
@@ -161,7 +161,7 @@ def cal_aa_weight(snps2aa_tot,pwm,n_snp,use_pwm=False):
 	col = np.zeros(weight.shape[0])
 	data = weight.values
 	aa_weight_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,1)).toarray()
-	aa_weight_mat[aa_weight_mat == 0.0] = 1
+	aa_weight_mat[(aa_weight_mat == 0.0)] = 1
 	return np.sqrt(aa_weight_mat)
 
 #######################################
@@ -202,7 +202,7 @@ def cal_distance_mat(snps2aa_tot,n_snp):
 
 		distance_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,n_snp)).toarray()
 		np.fill_diagonal(distance_mat, 1.0)
-		distance_mat[distance_mat == 0.0] = np.inf
+		distance_mat[(distance_mat == 0.0)] = np.inf
 		dist_mat_dict[key] = distance_mat - 1.0
 
 		# check if the distance matrix if symmetrical	
@@ -246,8 +246,8 @@ def main():
 
 	snps = freqs.index.values
 	idx_tab = pd.DataFrame()
-	idx_tab['id'] = list(range(snps.shape[0]))
-	idx_tab['snp'] = snps
+	idx_tab.loc[:,'id'] = list(range(snps.shape[0]))
+	idx_tab.loc[:,'snp'] = snps
 
 	# get distance matrix
 	distance_mat = cal_distance_mat(snps2aa, idx_tab)

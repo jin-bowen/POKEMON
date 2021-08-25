@@ -14,7 +14,7 @@ def percent(genotype, phenotype,snps2aa):
 	percent = percent / geno_sum
 
 	percent_df = pd.DataFrame(index=genotype.columns)
-	percent_df['es'] = percent
+	percent_df.loc[:,'es'] = percent
 	snp_df = pd.merge(percent_df, snps2aa,left_index=True, right_on='varcode')
 	
 	return snp_df
@@ -54,7 +54,7 @@ def snps_to_aa(snps,vep,map_to_pdb_file,database='pdb'):
 	map_to_pdb = pd.read_csv(map_to_pdb_file,usecols=range(3),index_col=False,\
 			comment='#',header=0,names=['structure','chain','SWISSPROT'])
 	vep_mapping_processing = vep.loc[vep['ID'].isin(snps)]
-	vep_mapping_processing['SWISSPROT'] = vep_mapping_processing['SWISSPROT'].str.split('.').str[0]
+	vep_mapping_processing.loc[:,'SWISSPROT'] = vep_mapping_processing['SWISSPROT'].str.split('.').str[0]
 	
 	if database == "pdb":
 		vep_mapping = pd.merge(vep_mapping_processing, map_to_pdb, on='SWISSPROT')
@@ -62,7 +62,7 @@ def snps_to_aa(snps,vep,map_to_pdb_file,database='pdb'):
 
 	elif database == "alphafold":
 		vep_mapping = vep_mapping_processing.copy()
-		vep_mapping['structure'] = vep_mapping['SWISSPROT'] 
+		vep_mapping.loc[:,'structure'] = vep_mapping['SWISSPROT'] 
 		out_df = map_alphafold_structure(vep_mapping)
 
 	return out_df
@@ -76,9 +76,9 @@ def map_PDB_structure(vep_mapping):
 		print("no PDB structure mapped to snps")
 		return pd.DataFrame(columns=new_cols)
 
-	vep_mapping['x'] = np.nan
-	vep_mapping['y'] = np.nan
-	vep_mapping['z'] = np.nan
+	vep_mapping.loc[:,'x'] = np.nan
+	vep_mapping.loc[:,'y'] = np.nan
+	vep_mapping.loc[:,'z'] = np.nan
 	
 	parser = PDBParser()
 	structure_list = {}
@@ -117,9 +117,9 @@ def map_alphafold_structure(vep_mapping):
 		print("no alphafold structure mapped to snps")
 		return pd.DataFrame(columns=new_cols)
 
-	vep_mapping['x'] = np.nan
-	vep_mapping['y'] = np.nan
-	vep_mapping['z'] = np.nan
+	vep_mapping.loc[:,'x'] = np.nan
+	vep_mapping.loc[:,'y'] = np.nan
+	vep_mapping.loc[:,'z'] = np.nan
 
 	parser = PDBParser()
 	structure_list = {}
@@ -134,7 +134,7 @@ def map_alphafold_structure(vep_mapping):
 				chain_id += chain.get_id()
 			vep_mapping['chain_list'] = ','.join(chain_id)
 		except: continue
-	vep_mapping['chain'] = vep_mapping.chain_list.str.split(',')
+	vep_mapping.loc[:,'chain'] = vep_mapping.chain_list.str.split(',')
 	vep_mapping = vep_mapping.explode('chain')
 
 	for irow, row in vep_mapping.iterrows():	
@@ -183,10 +183,10 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq=None):
 	freqs_df = genotype.sum(axis=0) 
 	freqs_df = freqs_df /(2 * genotype_raw.shape[0])
 	if freq:
-		freqs_subset = freqs_df[freqs_df < freq]
+		freqs_subset = freqs_df[(freqs_df < freq) & (freqs_df > 0)]
 		snps = freqs_subset.index.tolist()
 	else:
-		freqs_subset = freqs_df
+		freqs_subset = freqs_df[(freqs_df > 0)]
 		snps = freqs_subset.index.tolist()
 
 	return genotype.loc[individual,snps],freqs_subset,phenotype[individual], cov

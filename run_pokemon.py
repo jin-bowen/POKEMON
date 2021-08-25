@@ -59,8 +59,8 @@ def main():
 	snps = genotype.columns.tolist()
 	n_snp = len(snps)
 	idx_tab = pd.DataFrame()
-	idx_tab['id'] = list(range(n_snp))
-	idx_tab['varcode'] = snps
+	idx_tab.loc[:,'id'] = list(range(n_snp))
+	idx_tab.loc[:,'varcode'] = snps
 	snps2aa_noidx = snps_to_aa(snps,vep,map_to_pdb_file,database=database)
 	snps2aa = pd.merge(snps2aa_noidx, idx_tab, on='varcode')
 	outf = open(out_file, "a+")
@@ -87,10 +87,10 @@ def main():
 	freq_w, struct_w, combined_w = \
 		weight_mat(freqs.values,distance_mat,aa_weight,use_aa=use_blosum_bool,alpha=float(alpha))
 
-	snps2aa = snps2aa[snps2aa['structure']==pdb]
+	snps2aa = snps2aa.loc[snps2aa['structure']==pdb]
 
 	snps_sum = genotype.sum(axis=0)
-	snps_sum = snps_sum[snps_sum>0]
+	snps_sum = snps_sum.loc[snps_sum>0]
 	snps2aa_subset = snps2aa.merge(snps_sum.to_frame(),left_on='varcode',right_index=True)
 
 	# if there is only one element in the kernel
