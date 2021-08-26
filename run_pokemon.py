@@ -106,7 +106,7 @@ def main():
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
 
-	out_fig_prefix = figures_dir + gene_name + '_' + pdb
+	out_fig_prefix = figures_dir + '/' + gene_name + '_' + pdb
 #	obj = open('%s.pkl'%out_fig_prefix,'wb')
 #	pickle.dump(genotype, obj)
 #	pickle.dump(phenotype,obj)
