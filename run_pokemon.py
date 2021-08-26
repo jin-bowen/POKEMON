@@ -103,7 +103,7 @@ def main():
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
 
-#	outname = gene_name + '_' + pdb
+	outname = gene_name + '_' + pdb
 #	obj = open('%s.pkl'%outname,'wb')
 #	pickle.dump(genotype, obj)
 #	pickle.dump(phenotype,obj)

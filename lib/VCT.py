@@ -64,7 +64,13 @@ class VCT:
 		ifault=np.zeros(1,dtype = 'int32')
 		trace = np.zeros(7)
 		ipval = 1.0-wrap_qfc.qf(coeffs,noncentrality,dof,sigma,chi2val,lim,acc,trace,ifault)
-		return ipval
+
+		if ifault != 0:
+			return np.nan
+		if ifault == 0 and ipval < 0:
+			return acc
+		else:
+			return ipval
 
 	def test(self, phenotypes, acc=1e-4):
 
