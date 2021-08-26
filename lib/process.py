@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import urllib.request
 import os.path
+import os
 import re
 
 def percent(genotype, phenotype,snps2aa):
@@ -69,6 +70,9 @@ def snps_to_aa(snps,vep,map_to_pdb_file,database='pdb'):
 			
 def map_PDB_structure(vep_mapping):
 
+	pdb_struct_dir='ref/pdb'
+	if not os.path.exists(pdb_struct_dir):os.makedirs(pdb_struct_dir)	
+
 	ori_cols = ['ID','structure','chain','Protein_position','x','y','z','Amino_acids']
 	new_cols = ['varcode','structure','chain','structure_position','x','y','z','aa']
 
@@ -109,6 +113,9 @@ def map_PDB_structure(vep_mapping):
 	return	out_df.dropna().drop_duplicates().reset_index(drop=True)
 
 def map_alphafold_structure(vep_mapping):
+
+	af_struct_dir='ref/alphafold'
+	if not os.path.exists(af_struct_dir):os.makedirs(af_struct_dir)	
 
 	ori_cols = ['ID','structure','chain','Protein_position','x','y','z','Amino_acids']
 	new_cols = ['varcode','structure','chain','structure_position','x','y','z','aa']
