@@ -3,20 +3,19 @@ pokemon is a structure based variance component test for studying rare variants
 
 ## Setup
 ### Dependencies
-python > 3.7
+python > 3.7  
+
 gcc > 6.3.0
 
-Required package:
+Required package:(can be installed via pip)
 - fastlmmclib   
-see the instruction guide here: https://pypi.org/project/fastlmm/  
-
-Required packages, usually installed if you use a anaconda distributed python:
+see the instruction guide here: https://pypi.org/project/fastlmmclib/  
 - biopython   
-see the instruction here: https://biopython.org/wiki/Download
+see the instruction here: https://biopython.org/wiki/Download  
 - sklearn    
-see the instruction here: https://scikit-learn.org/stable/install.html
+see the instruction here: https://scikit-learn.org/stable/install.html  
 
-Required pacakges if visualization is on:  
+Optional pacakges if visualization is on:  
 -  pymol   
 pymol must be installed to use the flag --figures, see instruction here: https://pymol.org/2/  
 
