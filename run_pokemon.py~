@@ -13,6 +13,7 @@ def main():
 	parser.add_argument("--cov_file", type=str,default=None)
 	parser.add_argument("--cov_list", type=str,default=None)
 	parser.add_argument("--annotation", type=str,help="snp to AA mapping reference")
+	parser.add_argument("--ref_pdb_dir", type=str,help="AA coordinate reference")
 	parser.add_argument("--alpha", type=str, help="proportion of frequency kernel involved")
 	parser.add_argument("--use_blosum", action='store_true')
 	parser.add_argument("--out_file", type=str, help="output file")
@@ -35,8 +36,8 @@ def main():
 	else:
 		cov_file  = None
 		cov_list  = None
-
 	annotation    = args.annotation
+	ref_pdb_dir   = args.ref_pdb_dir
 	alpha         = args.alpha
 	out_file      = args.out_file
 	use_blosum_bool  = args.use_blosum
@@ -45,9 +46,7 @@ def main():
 
 	if args.pdb: pdb = args.pdb
 	else: pdb = None
-
 	draw_figures = args.figures
-	figures_dir  = args.out_fig_dir
 	
 	# default files
 	cwd = os.getcwd()
@@ -106,8 +105,8 @@ def main():
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
 
-	out_fig_prefix = figures_dir + gene_name + '_' + pdb
-#	obj = open('%s.pkl'%out_fig_prefix,'wb')
+	outname = gene_name + '_' + pdb
+#	obj = open('%s.pkl'%outname,'wb')
 #	pickle.dump(genotype, obj)
 #	pickle.dump(phenotype,obj)
 #	pickle.dump(snps2aa,  obj)
@@ -118,8 +117,8 @@ def main():
 	if draw_figures: 
 		from lib.cluster import cluster
 		cls = cluster(genotype,snps2aa,phenotype,distance_mat,pdb)
-		cls.plot(out_fig_prefix)
-		cls.plot_cluster(out_fig_prefix)
+		cls.plot(outname)
+		cls.plot_cluster(outname)
 
 	# calculate kernel based on the score matrix
 	K = cal_Kernel(combined_w, genotype)
