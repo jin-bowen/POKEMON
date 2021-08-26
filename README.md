@@ -8,11 +8,11 @@ python > 3.7
 gcc > 6.3.0
 
 Required package:(can be installed via pip)
-- fastlmmclib   
+- fastlmmclib=0.0.1
 see the instruction guide here: https://pypi.org/project/fastlmmclib/  
-- biopython   
+- biopython=1.77
 see the instruction here: https://biopython.org/wiki/Download  
-- sklearn    
+- sklearn=0.22.2
 see the instruction here: https://scikit-learn.org/stable/install.html  
 
 Optional pacakges if visualization is on:  
