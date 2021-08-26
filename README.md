@@ -9,11 +9,11 @@ gcc > 6.3.0
 
 Required package:(can be installed via pip)
 - fastlmmclib   
-see the instruction guide here: https://pypi.org/project/fastlmm/  
+see the instruction guide here: https://pypi.org/project/fastlmmclib/  
 - biopython   
-see the instruction here: https://biopython.org/wiki/Download
+see the instruction here: https://biopython.org/wiki/Download  
 - sklearn    
-see the instruction here: https://scikit-learn.org/stable/install.html
+see the instruction here: https://scikit-learn.org/stable/install.html  
 
 Optional pacakges if visualization is on:  
 -  pymol   
