@@ -2,7 +2,18 @@
 pokemon is a structure based variance component test for studying rare variants
 
 ## Setup
-### Dependencies
+**Highly recommand to use through docker image**  
+dockerhub repo: docker.io/bushlab/pokemon:latest
+```bash
+dir=/home/myhomespace
+gene=ENST00000373113
+docker run -it --rm -v ${dir}:${dir} -w=/POKEMON docker.io/bushlab/pokemon \
+python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --annotation ${gene}.csq \
+                     --cov_file test.cov --cov_list APOE4_dose,APOE2_dose --alpha 0 --use_blosum  \
+                     --out_file ${dir}/results --figures --out_fig_dir=${dir}  
+```
+
+## Dependencies
 python > 3.7  
 
 gcc > 6.3.0
@@ -19,16 +30,17 @@ Optional pacakges if visualization is on:
 -  pymol   
 pymol must be installed to use the flag --figures, see instruction here: https://pymol.org/2/  
 
-## Installation
 ```bash
 git clone https://github.com/bushlab-genomics/POKEMON.git  
 cd POKEMON 
 ```
+
 ## Example:
 ```bash
 gene=ENST00000373113
-python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --cov_file test.cov \
---cov_list APOE4_dose,APOE2_dose --alpha 0 --use_blosum --annotation ${gene}.csq --out_file results
+python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --annotation ${gene}.csq \
+                     --cov_file test.cov --cov_list APOE4_dose,APOE2_dose --alpha 0 --use_blosum  \
+                     --out_file results 
 ```
 ## Flags:
 **--gene_name**: required  
@@ -95,7 +107,7 @@ ${dir_to_vep}/vep -i <vcf file with genotype> --format vcf --cache --offline --d
 **--out_file**: required   
     output file where the POKEMON will write  
 
-**--cov_file**:  *optional*   
+**--cov_file**: *optional*
     covariate file.  
     the columns for covariate file are: FID IID <cov1> ... <cov2>
     A typical command to generate the covariate file:  
@@ -105,7 +117,7 @@ ${dir_to_plink}/plink --vcf <vcf file with genotype> --allow-no-sex --covar <vcf
  --prune --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene 
 ```
 
-**--cov_list**: *optional, but compulsory if --cov_file is used*   
+**--cov_list**: *optional, but required if --cov_file is flagged*   
     covariates to be used  
     **covariate must be present in the columns for covariate file**  
 
@@ -125,7 +137,8 @@ ${dir_to_plink}/plink --vcf <vcf file with genotype> --allow-no-sex --covar <vcf
     if explicitly flagged, POKEMON will save pymol figures  
     **pymol must be installed to use this flag**  
   
-
+**--out_fig_dir**: *optional but required if --figures is flagged*   
+    Directory where POKEMON will write figures to                                                                                         
 
 ### Reference:  
 Jin, B., Capra, J.A., Benchek, P., Wheeler, N., Naj, A.C., Hamilton-Nelson, K.L., Farrell, J.J., Leung, Y.Y., Kunkle, B., Vadarajan, B., et al. (2021). An Association Test of the Spatial Distribution of Rare Missense Variants within Protein Structures Improves Statistical Power of Sequencing Studies. BioRxiv 2021.08.09.455695.    
