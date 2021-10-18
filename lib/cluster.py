@@ -66,7 +66,11 @@ class cluster:
 
 		#pymol.finish_launching()
 		cmd.reinitialize()
-		cmd.fetch(self.pdb)
+		try:
+			cmd.fetch(self.pdb)
+		except:
+			cmd.load('ref/alphafold/%s.pdb'%self.pdb)
+		
 		cmd.show_as('cartoon',self.pdb)
 		cmd.color('white',self.pdb)
 		
