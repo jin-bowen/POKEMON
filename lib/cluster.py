@@ -127,7 +127,7 @@ class cluster:
 		#pymol.finish_launching()
 		cmd.reinitialize()
 		try:
-			cmd.load('ref/pdb/%s.pdb'%self.pdb, self.pdb)
+			cmd.load('ref/pdb/pdb%s.ent'%self.pdb, self.pdb)
 		except:
 			cmd.load('ref/alphafold/%s.pdb'%self.pdb, self.pdb)
 		
