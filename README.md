@@ -9,7 +9,7 @@ dir=/home/myhomespace
 gene=ENST00000373113
 docker run -it --rm -v ${dir}:${dir} -w=/POKEMON docker.io/bushlab/pokemon \
 python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --annotation ${gene}.csq \
-                     --cov_file test.cov --cov_list APOE4_dose,APOE2_dose --alpha 0 --use_blosum  \
+                     --cov_file test.cov --cov_list APOE4_dose,APOE2_dose,PC1,PC2 --alpha 0.0 --use_blosum  \
                      --out_file ${dir}/results --figures --out_fig_dir=${dir}  
 ```
 
@@ -39,7 +39,7 @@ cd POKEMON
 ```bash
 gene=ENST00000373113
 python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --annotation ${gene}.csq \
-                     --cov_file test.cov --cov_list APOE4_dose,APOE2_dose --alpha 0 --use_blosum  \
+                     --cov_file test.cov --cov_list APOE4_dose,APOE2_dose,PC1,PC2 --alpha 0.0 --use_blosum  \
                      --out_file results 
 ```
 ## Flags:
