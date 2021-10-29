@@ -50,8 +50,31 @@ def parser_vep(vep_input):
 
 	return csq_df_filter[['ID','Feature','SWISSPROT','Protein_position','Amino_acids']]
 
-def snps_to_aa(snps,vep,map_to_pdb_file,database='pdb'): 
+def filter_snps2aa(snps2aa_noidx, pdb='None'):
+	# find the protein with most varaints mapped
+	if not pdb:
+		uniq_map = snps2aa_noidx.groupby(['structure','chain'])['varcode'].count().reset_index()
+		iline = uniq_map['varcode'].argmax()
+		pdb = uniq_map.loc[iline,'structure']
 
+	snps2aa = snps2aa_noidx.loc[snps2aa_noidx['structure']==pdb]
+
+	snps_mapped = snps2aa['varcode'].unique().tolist()
+
+	idx_tab = pd.DataFrame()
+	idx_tab.loc[:,'id'] = list(range(len(snps_mapped)))
+	idx_tab.loc[:,'varcode'] = snps_mapped
+
+	print(snps2aa)
+	print(idx_tab)
+
+	snps2aa = pd.merge(snps2aa, idx_tab, on='varcode')
+
+	return snps2aa,pdb
+
+def snps_to_aa(vep,genotype,map_to_pdb_file,database='pdb'): 
+
+	snps = set(vep['ID'].values).intersection(genotype.columns.tolist())
 	map_to_pdb = pd.read_csv(map_to_pdb_file,usecols=range(3),index_col=False,\
 			comment='#',header=0,names=['structure','chain','SWISSPROT'])
 	vep_mapping_processing = vep.loc[vep['ID'].isin(snps)]

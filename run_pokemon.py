@@ -59,51 +59,24 @@ def main():
 	genotype,freqs,phenotype,cov = \
 		parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq_filter)
 	vep = parser_vep(annotation)
-
-	if alpha == 0:
-		snps_mapped = set(vep['ID'].values).intersection(genotype.columns.tolist())
-		genotype = genotype[snps_mapped]		
-
-	snps = genotype.columns.tolist()
-	snps2aa_noidx = snps_to_aa(snps,vep,map_to_pdb_file,database=database)
-
-	n_snp = len(snps)
-	idx_tab = pd.DataFrame()
-	idx_tab.loc[:,'id'] = list(range(n_snp))
-	idx_tab.loc[:,'varcode'] = snps
-	snps2aa = pd.merge(snps2aa_noidx, idx_tab, on='varcode')
+	snps2aa_noidx = snps_to_aa(vep,genotype,map_to_pdb_file,database=database)
 
 	outf = open(out_file, "a+")
 	# no structure mapped 
-	if snps2aa.empty: 
+	if snps2aa_noidx.empty: 
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
 
-	# find the protein with most varaints mapped
-	if not pdb:
-		uniq_map = snps2aa.groupby(['structure','chain'])['varcode'].count().reset_index()
-		iline = uniq_map['varcode'].argmax()
-		pdb = uniq_map.loc[iline,'structure']
+	snps2aa,pdb = filter_snps2aa(snps2aa_noidx, pdb=pdb)
+	snps_mapped = snps2aa['varcode'].unique()
+	genotype = genotype[snps_mapped]
+	freqs    = freqs[snps_mapped]
 
-	# get distance matrix
-	dist_mat_dict = cal_distance_mat(snps2aa, n_snp)
-	distance_mat = dist_mat_dict.get(pdb)
-
-	# variants weight induced by aa change
-	aa_weight = cal_aa_weight(snps2aa,pwm,n_snp,use_pwm=use_blosum_bool)
-
-	# generate the score matrix based on frequency and distance
-	# alpha=1: freq only; alpha=0: struct only
-	freq_w, struct_w, combined_w = \
-		weight_mat(freqs.values,distance_mat,aa_weight,use_aa=use_blosum_bool,alpha=float(alpha))
-	snps2aa = snps2aa.loc[snps2aa['structure']==pdb]
-
-	snps_sum = genotype.sum(axis=0)
-	snps_sum = snps_sum.loc[snps_sum>0]
-	snps2aa_subset = snps2aa.merge(snps_sum.to_frame(),left_on='varcode',right_index=True)
-	
 	# if there is only one element in the kernel
 	# do not execute the calculation
+	snps_sum = genotype.sum(axis=0)
+	snps_sum = snps_sum.loc[snps_sum>0]
+	snps2aa_subset = snps2aa.merge(snps_sum.to_frame(),left_on='varcode',right_index=True)	
 	if snps2aa_subset['varcode'].nunique() < 5:
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
@@ -112,21 +85,22 @@ def main():
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
 
+	# get distance matrix
+	distance_mat = cal_distance_mat(snps2aa)
+
+	# variants weight induced by aa change
+	aa_weight = cal_aa_weight(snps2aa,pwm,use_pwm=use_blosum_bool)
+	# generate the score matrix based on frequency and distance
+	# alpha=1: freq only; alpha=0: struct only
+	freq_w, struct_w, combined_w = \
+		weight_mat(freqs.values,distance_mat,aa_weight,use_aa=use_blosum_bool,alpha=float(alpha))
+
 	if draw_figures: 
 		from lib.cluster import cluster
 		out_fig_prefix = figures_dir + '/' + gene_name + '_' + pdb
 		cls = cluster(genotype,snps2aa,phenotype,distance_mat,pdb)
 		cls.plot(out_fig_prefix)
 		cls.plot_cluster(out_fig_prefix)
-
-#	out_prefix =  gene_name + '_' + pdb
-#	obj = open('%s.pkl'%out_prefix,'wb')
-#	pickle.dump(genotype, obj)
-#	pickle.dump(phenotype,obj)
-#	pickle.dump(snps2aa,  obj)
-#	pickle.dump(distance_mat,obj)	
-#	obj.close()
-#	return 0
 
 	# calculate kernel based on the score matrix
 	K = cal_Kernel(combined_w, genotype)

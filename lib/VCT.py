@@ -50,7 +50,7 @@ class VCT:
 		return nominators / denonimators 
 
 	def compute_p_value(self, r, acc):
-		return self.davies(r, self.phis[np.where(self.phis > 1e-10)], acc)
+		return self.davies(r, self.phis[np.where(self.phis > 1e-8)], acc)
 
 	def davies(self, squaredform, eigvals, acc):
 		sigma = 0.0
@@ -67,19 +67,19 @@ class VCT:
 
 		if ifault != 0:
 			return np.nan
-		if ifault == 0 and ipval < 0:
+		if ifault == 0 and ipval <= 0.0:
 			return acc
 		else:
 			return ipval
 
-	def test(self, phenotypes, acc=1e-4):
+	def test(self, phenotypes, acc=1e-8):
 
 		scores = self.compute_scores(phenotypes)
 		pvals = self.compute_p_value(scores, acc)
 		return pvals
 
 	def __init__(self, kernel_matrix=None, fixed_covariates=None, num_var=None,\
-			zero_threshold=1e-10, phis=None):
+			zero_threshold=1e-8, phis=None):
 		self.K = kernel_matrix.astype('float32')
 		self.n = np.shape(self.K)[0]
 		self.m = int(num_var)

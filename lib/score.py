@@ -115,13 +115,12 @@ def weight_mat(freqs, distance_mat, aa_weight,use_aa=False,sim_fun='exponential'
 	elif sim_fun == 'bounded': struct_w = bounded(distance_mat) 
 
 	# scale by AA weight
-	aa_weight_vec = aa_weight.reshape((-1,1))
-	aa_scale = aa_weight_vec.dot(aa_weight_vec.T)
-
+	aa_scale = aa_weight.dot(aa_weight.T)
 	if use_aa: struct_w *= aa_scale
 
 	struct_norm = np.sum(struct_w)
 	freq_norm = np.sum(freq_w)
+
 	# combine two weights kernel with a parameter alpha
 	if alpha == 0:
 		freq_struct_w = struct_w / struct_norm
@@ -133,40 +132,36 @@ def weight_mat(freqs, distance_mat, aa_weight,use_aa=False,sim_fun='exponential'
 	return freq_w, struct_w, freq_struct_w  
 
 #######################################
-def cal_aa_weight(snps2aa_tot,pwm,n_snp,use_pwm=False):
+def cal_aa_weight(snps2aa,pwm,use_pwm=False):
 	"""
-	Deal with situation when a single snp are mapped to more than two different residues 
-	  in a protein structure. Maintain the smallest pairwise distance
-
 	Args:
 	snps2aa - a pandas dataframe with header:
 	  'snp','structid','chain','chain_seqid','x','y','z','aa'
 
 	Returns:
-	"""
-	snps2aa_tot = snps2aa_tot.set_index('id')
-	snps2aa_tot[['ref_aa','alt_aa']] = snps2aa_tot['aa'].str.split('/', expand=True)
+	"""	
+	snps2aa_unique = snps2aa[['varcode','aa','id']].drop_duplicates()
+	n_snp = snps2aa['varcode'].nunique()
+
+	if n_snp != snps2aa_unique.shape[0]:
+		raise Exception('non-unique projection found')
+
+	snps2aa_unique = snps2aa_unique.set_index('id')
+	snps2aa_unique[['ref_aa','alt_aa']] = snps2aa_unique['aa'].str.split('/', expand=True)
 
 	if use_pwm:
-		log_score = snps2aa_tot.apply(lambda x: pwm.loc[x['ref_aa'],x['alt_aa']], axis=1)
+		log_score = snps2aa_unique.apply(lambda x: pwm.loc[x['ref_aa'],x['alt_aa']], axis=1)
 		weight = log_score.apply(lambda x: np.exp(-x))
-#	elif use_bfct:
-#		weight = 1/snps2aa_tot['scaled_bfct']
-#		weight = weight / min(weight)
 	else:
-		weight = pd.Series(data=np.ones(len(snps2aa_tot)),
-			index=snps2aa_tot.index.tolist())	
+		weight = pd.Series(data=np.ones(len(snps2aa_unique)),
+			index=snps2aa_unique.index.tolist())	
 
-	row = weight.index.tolist()
-	col = np.zeros(weight.shape[0])
-	data = weight.values
-	aa_weight_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,1)).toarray()
-	aa_weight_mat[(aa_weight_mat == 0.0)] = 1
+	aa_weight_mat = weight.values.reshape((n_snp,1))
 	return np.sqrt(aa_weight_mat)
 
 #######################################
 ### Construct non redundant distance matrix
-def cal_distance_mat(snps2aa_tot,n_snp):
+def cal_distance_mat(snps2aa):
 	"""
 	Deal with situation when a single snp are mapped to more than two different residues 
 	  in a protein structure. Maintain the smallest pairwise distance
@@ -179,39 +174,34 @@ def cal_distance_mat(snps2aa_tot,n_snp):
 	Returns:
 	distance_mat - a matrix containing the minimum pairwise distance between snps
 	"""
-
-	snps2aa_grp = snps2aa_tot.groupby(['structure'])
-	dist_mat_dict = {}
-
-	for key, snps2aa in snps2aa_grp:
-
-		snp_coord = snps2aa[['x','y','z']].values
-		distance_vec = squareform(pdist(snp_coord)).flatten()
 	
-		snp_idx = snps2aa['id'].tolist()
-		snp_pair_idx = list(map(list, it.product(snp_idx, repeat=2)))
+	n_snp = snps2aa['varcode'].nunique()
+	snp_coord = snps2aa[['x','y','z']].values
+	distance_vec = squareform(pdist(snp_coord)).flatten()
 	
-		snp_pair_distance = pd.DataFrame(data=snp_pair_idx, columns=['i','j'], dtype=int)
-		snp_pair_distance['r'] = distance_vec
+	snp_idx = snps2aa['id'].tolist()
+	snp_pair_idx = list(map(list, it.product(snp_idx, repeat=2)))
 	
-		snp_pair_distance_uniq = snp_pair_distance.groupby(['i','j']).min().reset_index()
+	snp_pair_distance = pd.DataFrame(data=snp_pair_idx, columns=['i','j'], dtype=int)
+	snp_pair_distance['r'] = distance_vec
 	
-		row  = snp_pair_distance_uniq['i'].values
-		col  = snp_pair_distance_uniq['j'].values
-		data = snp_pair_distance_uniq['r'].values + 1.0
+	snp_pair_distance_uniq = snp_pair_distance.groupby(['i','j']).min().reset_index()
+	
+	row  = snp_pair_distance_uniq['i'].values
+	col  = snp_pair_distance_uniq['j'].values
+	data = snp_pair_distance_uniq['r'].values + 1.0
+	
+	distance_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,n_snp)).toarray()
+	np.fill_diagonal(distance_mat, 1.0)
+	distance_mat[(distance_mat == 0.0)] = np.inf
+	distance_mat -= 1.0
 
-		distance_mat = sparse.coo_matrix((data,(row,col)),shape=(n_snp,n_snp)).toarray()
-		np.fill_diagonal(distance_mat, 1.0)
-		distance_mat[(distance_mat == 0.0)] = np.inf
-		dist_mat_dict[key] = distance_mat - 1.0
-
-		# check if the distance matrix if symmetrical	
-		#print((distance_mat.T == distance_mat).all())
-	return dist_mat_dict
+	# check if the distance matrix if symmetrical	
+	#print((distance_mat.T == distance_mat).all())
+	return distance_mat
 
 def cal_Kernel(combined_w, genotype):
 	"""
-
 	calculate kernal from frequency and distance matrix
 
 	Args:

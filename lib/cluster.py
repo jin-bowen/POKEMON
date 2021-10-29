@@ -183,7 +183,7 @@ def main():
 
 	infile  = sys.argv[1]
 	pdb = sys.argv[2]
-	prefix=file.split('.')[0]
+	prefix = infile.split('.')[0]
 
 	with open(infile, 'rb') as f:
 		genotype = pickle.load(f)
