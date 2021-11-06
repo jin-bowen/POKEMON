@@ -64,10 +64,6 @@ def filter_snps2aa(snps2aa_noidx, pdb='None'):
 	idx_tab = pd.DataFrame()
 	idx_tab.loc[:,'id'] = list(range(len(snps_mapped)))
 	idx_tab.loc[:,'varcode'] = snps_mapped
-
-	print(snps2aa)
-	print(idx_tab)
-
 	snps2aa = pd.merge(snps2aa, idx_tab, on='varcode')
 
 	return snps2aa,pdb
@@ -186,9 +182,11 @@ def map_alphafold_structure(vep_mapping):
 def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq=None):
 
 	# process genotype file
-	genotype_raw=pd.read_csv(genotype_file,sep='\s+|\t|,',engine='python',index_col=0)
-	genotype_raw.fillna(0,inplace=True)
+	genotype_raw=pd.read_csv(genotype_file,sep='\s+|\t|,',engine='python',index_col=1)
+	genotype_raw.fillna(2,inplace=True)
 	genotype = genotype_raw.iloc[:,5:]
+	genotype.replace({2:0,0:2}, inplace=True)
+
 	# process covariates
 	if cov_file:
 		cov_raw = pd.read_csv(cov_file,sep='\s+|\t|,',engine='python',index_col=0)
@@ -197,8 +195,9 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq=None):
 	else: cov = None
 
 	# process phenotype files
-	phenotype = pd.read_csv(phenotype_file,sep='\s+|\t|,',engine='python',index_col=0)
+	phenotype = pd.read_csv(phenotype_file,sep='\s+|\t|,',engine='python',usecols=range(2),index_col=0)
 	phenotype.dropna(inplace=True)
+
 	if phenotype.shape[1] < 2: phenotype = phenotype.transpose()
 	phenotype_ind = phenotype.columns.tolist()
 
@@ -212,6 +211,7 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq=None):
 	## calculate freq
 	freqs_df = genotype.sum(axis=0) 
 	freqs_df = freqs_df /(2 * genotype_raw.shape[0])
+
 	if freq:
 		freqs_subset = freqs_df[(freqs_df < freq) & (freqs_df > 0)]
 		snps = freqs_subset.index.tolist()

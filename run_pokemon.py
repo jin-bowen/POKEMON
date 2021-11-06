@@ -84,7 +84,6 @@ def main():
 	if np.all(percent_df['es']<0.5) or np.all(percent_df['es']>0.5):
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
-
 	# get distance matrix
 	distance_mat = cal_distance_mat(snps2aa)
 
