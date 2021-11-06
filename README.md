@@ -58,12 +58,10 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
 
    A typical command to generate the genotype file:
 ```bash
-bcftools annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' <vcf file with genotype>  
-
-plink --vcf <vcf file with genotype> --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene
+plink2 --vcf <vcf file with genotypes> --set-all-var-ids @:#:\$r:\$a --snps-only --mac 1 --export A --threads 4 --out test_gene
    
 # change the formart from chr:pos:ref:alt_alt -> chr:pos:ref:alt
-sed -i 's/_[A-Z]//g' test_gene.raw
+sed -i '1s/_[A-Z]//g' test_gene.raw
 ```
 
 **--phenotype**: required  
@@ -94,9 +92,9 @@ sed -i 's/_[A-Z]//g' test_gene.raw
     A typical script to generate the annotation file:  
 
 ```    
-${dir_to_vep}/vep -i <vcf file with genotype> --format vcf --cache --offline --dir <dir to cache> \
---check_existing --symbol --protein --uniprot --domains --canonical --biotype --pubmed --coding_only --assembly GRCh37 \
---buffer_size 50000  --fork 8 --vcf -o test_gene.csq --no_stats
+${dir_to_vep}/vep -i <vcf file with genotype> --cache --offline --dir <dir to cache> \
+--check_ref --symbol --protein --uniprot --domains --canonical --biotype --coding_only --assembly GRCh37 \
+--vcf -o test_gene.csq --no_stats
 ```
     
 **--alpha**:  required    
@@ -109,13 +107,7 @@ ${dir_to_vep}/vep -i <vcf file with genotype> --format vcf --cache --offline --d
 
 **--cov_file**: *optional*
     covariate file.  
-    the columns for covariate file are: FID IID <cov1> ... <cov2>
-    A typical command to generate the covariate file:  
-
-``` 
-${dir_to_plink}/plink --vcf <vcf file with genotype> --allow-no-sex --covar <vcf file with genotype> \  
- --prune --snps-only  --allow-no-sex --max-maf 0.05 --recode A --threads 4 --out test_gene 
-```
+    the columns for covariate file are: IID <cov1> ... <cov2>    
 
 **--cov_list**: *optional, but required if --cov_file is flagged*   
     covariates to be used  
