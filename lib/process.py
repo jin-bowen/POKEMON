@@ -48,7 +48,21 @@ def parser_vep(vep_input):
 	csq_df_filter.loc[:,'SWISSPROT'] = pdbentry[0]
 	csq_df_filter.loc[:,'ID']=csq_df_filter[['#CHROM','POS','REF','ALT']].astype(str).agg(':'.join,axis=1)
 
-	return csq_df_filter[['ID','Feature','SWISSPROT','Protein_position','Amino_acids']]
+	#extend the csq dataframe to all possible amino acid change
+	#ref as destinate allele
+	csq_df_filter_part1 = csq_df_filter.copy()
+	csq_df_filter_part1['des_allele'] = csq_df_filter_part1['REF']
+	csq_df_filter_part1['Amino_acids'] = csq_df_filter['Amino_acids'].str[::-1]
+
+	#alt as destinate allele
+	csq_df_filter_part2 = csq_df_filter.copy()
+	csq_df_filter_part2['des_allele'] = csq_df_filter_part2['ALT']
+	csq_df_filter_part2['Amino_acids'] = csq_df_filter['Amino_acids']
+	csq_df_filter_ext = pd.concat([csq_df_filter_part1,csq_df_filter_part2],ignore_index=True)
+
+	csq_df_filter_ext['full_id'] = csq_df_filter_ext[['ID','des_allele']].astype(str).agg('_'.join,axis=1)
+	return csq_df_filter_ext[['full_id','Feature','SWISSPROT','Protein_position','Amino_acids']]
+
 
 def filter_snps2aa(snps2aa_noidx, pdb='None'):
 	# find the protein with most varaints mapped
@@ -70,10 +84,10 @@ def filter_snps2aa(snps2aa_noidx, pdb='None'):
 
 def snps_to_aa(vep,genotype,map_to_pdb_file,database='pdb'): 
 
-	snps = set(vep['ID'].values).intersection(genotype.columns.tolist())
+	snps = set(vep['full_id'].values).intersection(genotype.columns.tolist())
 	map_to_pdb = pd.read_csv(map_to_pdb_file,usecols=range(3),index_col=False,\
 			comment='#',header=0,names=['structure','chain','SWISSPROT'])
-	vep_mapping_processing = vep.loc[vep['ID'].isin(snps)]
+	vep_mapping_processing = vep.loc[vep['full_id'].isin(snps)]
 	vep_mapping_processing.loc[:,'SWISSPROT'] = vep_mapping_processing['SWISSPROT'].str.split('.').str[0]
 	
 	if database == "pdb":
@@ -92,7 +106,7 @@ def map_PDB_structure(vep_mapping):
 	pdb_struct_dir='ref/pdb'
 	if not os.path.exists(pdb_struct_dir):os.makedirs(pdb_struct_dir)	
 
-	ori_cols = ['ID','structure','chain','Protein_position','x','y','z','Amino_acids']
+	ori_cols = ['full_id','structure','chain','Protein_position','x','y','z','Amino_acids']
 	new_cols = ['varcode','structure','chain','structure_position','x','y','z','aa']
 
 	if len(vep_mapping['structure']) == 0: 
@@ -179,13 +193,11 @@ def map_alphafold_structure(vep_mapping):
 
 	return	out_df.dropna().drop_duplicates().reset_index(drop=True)
 
-def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq=None):
+def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq):
 
 	# process genotype file
 	genotype_raw=pd.read_csv(genotype_file,sep='\s+|\t|,',engine='python',index_col=1)
-	genotype_raw.fillna(2,inplace=True)
 	genotype = genotype_raw.iloc[:,5:]
-	genotype.replace({2:0,0:2}, inplace=True)
 
 	# process covariates
 	if cov_file:
@@ -209,17 +221,32 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq=None):
 		cov = cov.loc[individual]
 
 	## calculate freq
-	freqs_df = genotype.sum(axis=0) 
-	freqs_df = freqs_df /(2 * genotype_raw.shape[0])
+	freqs = genotype.sum(axis=0,skipna=True) 
+	freqs = freqs /(2 * genotype.count())
+	
+	freqs_df = freqs.to_frame(name='freq')
+	# secure a minor allele count matrix
+	
+	freqs_df['index'] = freqs_df.index		
+	freqs_df[['ID','c_allele']] = freqs_df['index'].str.split('_',expand=True)
+	freqs_df[['#CHROM','POS','REF','ALT']] = freqs_df['ID'].str.split(':',expand=True)
 
-	if freq:
-		freqs_subset = freqs_df[(freqs_df < freq) & (freqs_df > 0)]
-		snps = freqs_subset.index.tolist()
-	else:
-		freqs_subset = freqs_df[(freqs_df > 0)]
-		snps = freqs_subset.index.tolist()
+	genotype_processing = genotype.T
+	flip_allele_bool = freqs > (1-freq)
+	genotype_processing.loc[flip_allele_bool] = genotype_processing.loc[flip_allele_bool].replace({2:0, 0:2})
+	freqs_df.loc[flip_allele_bool,'index'] = freqs_df.loc[flip_allele_bool,['ID','ALT']].astype(str).agg('_'.join,axis=1)
 
-	return genotype.loc[individual,snps],freqs_subset,phenotype[individual], cov
+	genotype_processing.set_index(freqs_df['index'].values, inplace=True)
+	ma_genotype = genotype_processing.T
+
+	ma_freqs = ma_genotype.sum(axis=0,skipna=True) 
+	ma_freqs = ma_freqs /(2 * ma_genotype.count())
+		
+	ma_freqs_subset = ma_freqs[(ma_freqs < freq) & (ma_freqs > 0)]
+	snps = ma_freqs_subset.index.tolist()
+
+	ma_genotype.fillna(0, inplace=True)
+	return ma_genotype.loc[individual,snps],ma_freqs[snps],phenotype[individual], cov
 
 if __name__ == "__main__":
 	main()

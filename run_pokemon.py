@@ -20,7 +20,7 @@ def main():
 	parser.add_argument("--figures", action='store_true')
 	parser.add_argument("--out_fig_dir", type=str, default=None)
 
-	parser.add_argument("--maf",type=float,default=None)
+	parser.add_argument("--maf",type=float,default=0.05)
 	parser.add_argument("--database",type=str,default='pdb',\
 			help="can be pdb or alphafold, default as pdb")
 
@@ -68,12 +68,13 @@ def main():
 		return None
 
 	snps2aa,pdb = filter_snps2aa(snps2aa_noidx, pdb=pdb)
+
+	# restrict to mapped variant only
 	snps_mapped = snps2aa['varcode'].unique()
 	genotype = genotype[snps_mapped]
 	freqs    = freqs[snps_mapped]
 
-	# if there is only one element in the kernel
-	# do not execute the calculation
+	# if there is only one element in the kernel, do not execute the calculation
 	snps_sum = genotype.sum(axis=0)
 	snps_sum = snps_sum.loc[snps_sum>0]
 	snps2aa_subset = snps2aa.merge(snps_sum.to_frame(),left_on='varcode',right_index=True)	
@@ -84,11 +85,13 @@ def main():
 	if np.all(percent_df['es']<0.5) or np.all(percent_df['es']>0.5):
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
+
 	# get distance matrix
 	distance_mat = cal_distance_mat(snps2aa)
 
 	# variants weight induced by aa change
 	aa_weight = cal_aa_weight(snps2aa,pwm,use_pwm=use_blosum_bool)
+
 	# generate the score matrix based on frequency and distance
 	# alpha=1: freq only; alpha=0: struct only
 	freq_w, struct_w, combined_w = \
