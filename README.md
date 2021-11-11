@@ -47,21 +47,18 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
    A label used as gene name in the output result file 
    
 **--genotype**: required  
-   plink output with recode A option(The 'transpose' modifier).    
+   allele count matrix
    **note1: snp must be named as chr:pos:alt:ref (e.g., 6:41129275:G:C)**   
    **note2: snps must be unique**  
    
-   The columns for genotype file is      
-| FID  | IID | PAT | MAT | SEX | PHENOTYPE | 6:41129275:G:C | ... | ... |
+   A example for genotype file is      
+| FID  | IID | PAT | MAT | SEX | PHENOTYPE | 6:41129275:G:C_G | ... | ... |
 | --- | --- | --- | --- |--- | --- | --- | --- | --- |
 | ... | ... | ... | ... | ... | ... | ... | ... | ... |   
 
    A typical command to generate the genotype file:
 ```bash
-plink2 --vcf <vcf file with genotypes> --set-all-var-ids @:#:\$r:\$a --snps-only --mac 1 --export A --threads 4 --out test_gene
-   
-# change the formart from chr:pos:ref:alt_alt -> chr:pos:ref:alt
-sed -i '1s/_[A-Z]//g' test_gene.raw
+plink2 --vcf <vcf file with genotypes> --set-all-var-ids @:#:\$r:\$a --snps-only --mac 1 --export A --out test_gene
 ```
 
 **--phenotype**: required  
@@ -71,13 +68,13 @@ sed -i '1s/_[A-Z]//g' test_gene.raw
    format1 for testing with single phenotype: column1 for individuals, column2 for phenotype, seperated by space. 
 | ID  | pheno |
 | --- | ---- |
-| name1  | 0  |
-| name2  | 1  | 
+| sample1  | 0  |
+| sample1  | 1  | 
 | ...  | ...  |
-| name1000  | 0  |  
+| sample1000  | 0  |  
 
    format2 for testing with multiple phenotypes: row for phenotypes, columns for individuals, seperated by space.   
-| pheno  | name1 | name2 | ... | name1000 |
+| pheno  | sample1 | sample2 | ... | sample1000 |
 | --- | --- |--- |--- |---|
 | pheno1  | 1  | 0 | ... | 1 |
 | pheno2  | 1  | 0 | ... | 1 |
@@ -107,20 +104,25 @@ ${dir_to_vep}/vep -i <vcf file with genotype> --cache --offline --dir <dir to ca
 
 **--cov_file**: *optional*
     covariate file.  
-    the columns for covariate file are: IID <cov1> ... <cov2>    
+    | ID  | cov1 | cov2 | ... | cov1000 |
+| --- | --- |--- |--- |---|
+| sample1  | 1  | 0 | ... | 1 |
+| sample2 | 1  | 0 | ... | 1 |
+| ...  | ...  | ... | ... | ... |
+| sample1000  | 1  | 0 | ... | 1 |
 
 **--cov_list**: *optional, but required if --cov_file is flagged*   
-    covariates to be used  
+    covariates to be used, seperate by comma    
     **covariate must be present in the columns for covariate file**  
 
 **--pdb**: *optional*   
     e.g., --pdb 5eli, POKEMON will run on the specificed protein:5eli rather the optimal one  
    
-**--maf**: *optional*      
+**--maf**: *optional*, default as 0.05    
     e.g., --maf 0.01, POKEMON will only run on variants with minor allele frequency < 0.01  
   
-**--database**: *optional*      
-    can only be pdb or alphafold, default as pdb  
+**--database**: *optional*, default as pdb    
+    can only be pdb or alphafold     
                                                                                          
 **--use_aa**: *optional*  
     if explicitly flagged, the kernel will be further scaled by AA change weight from BLOSUM62 matrix  
