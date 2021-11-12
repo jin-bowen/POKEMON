@@ -150,7 +150,7 @@ def map_alphafold_structure(vep_mapping):
 	af_struct_dir='ref/alphafold'
 	if not os.path.exists(af_struct_dir):os.makedirs(af_struct_dir)	
 
-	ori_cols = ['ID','structure','chain','Protein_position','x','y','z','Amino_acids']
+	ori_cols = ['full_id','structure','chain','Protein_position','x','y','z','Amino_acids']
 	new_cols = ['varcode','structure','chain','structure_position','x','y','z','aa']
 
 	if len(vep_mapping['structure']) == 0: 
