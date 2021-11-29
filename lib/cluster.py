@@ -57,7 +57,9 @@ class cluster:
 	def plot_cluster(self,outfile):
 		case_cluster_df, ctrl_cluster_df = self.cluster_analysis()
 		print(case_cluster_df)
+		case_cluster_df.to_csv('%s.csv'%outfile,mode='w')
 		print(ctrl_cluster_df)
+		ctrl_cluster_df.to_csv('%s.csv'%outfile,mode='a')
 		# for case
 		n_case_grp = case_cluster_df['grp'].max() + 1
 		case_map = plt.get_cmap("OrRd_r", n_case_grp + 3)
