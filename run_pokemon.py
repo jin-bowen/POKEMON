@@ -73,7 +73,6 @@ def main():
 	snps_mapped = snps2aa['varcode'].unique()
 	genotype = genotype[snps_mapped]
 	freqs    = freqs[snps_mapped]
-
 	# if there is only one element in the kernel, do not execute the calculation
 	snps_sum = genotype.sum(axis=0)
 	snps_sum = snps_sum.loc[snps_sum>0]

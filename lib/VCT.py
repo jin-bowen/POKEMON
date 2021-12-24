@@ -1,5 +1,6 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
 from fastlmmclib.quadform.qfc_src import wrap_qfc
 import numpy as np
 import scipy as sp
@@ -7,12 +8,15 @@ from scipy import sparse
 import sys
 
 class VCT:
-	def process_covariates(self, fixed_covariates=None):
-		self.X = fixed_covariates
-
+	def process_covariates(self, fixed_covariates=None):	
+		
 		# add bias term
-		if self.X is None: self.X = np.ones((self.n, 1), dtype='float32')
-		else: self.X = np.hstack([self.X, np.ones((self.n, 1))])
+		if fixed_covariates is None: self.X = np.ones((self.n, 1), dtype='float32')
+		else:
+			scaler = StandardScaler() 
+			scaler.fit(fixed_covariates)
+			self.X = scaler.transform(fixed_covariates)
+			self.X = np.hstack([self.X, np.ones((self.n, 1))])
 
 		self.X = self.X.astype('float32')
 		self.p = self.X.shape[1]

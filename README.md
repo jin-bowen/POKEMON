@@ -6,7 +6,7 @@ pokemon is a structure based variance component test for studying rare variants
 dockerhub repo: docker.io/bushlab/pokemon:latest
 ```bash
 dir=/home/myhomespace
-gene=ENST00000373113
+gene=ENSG00000183134
 docker run -it --rm -v ${dir}:${dir} -w=/POKEMON docker.io/bushlab/pokemon \
 python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --annotation ${gene}.csq \
                      --cov_file test.cov --cov_list APOE4_dose,APOE2_dose,PC1,PC2 --alpha 0.0 --use_blosum  \
@@ -19,11 +19,11 @@ python > 3.7
 gcc > 6.3.0
 
 Required package:(can be installed via pip)
-- fastlmmclib=0.0.1
+- fastlmmclib
 see the instruction guide here: https://pypi.org/project/fastlmmclib/  
-- biopython=1.77
+- biopython
 see the instruction here: https://biopython.org/wiki/Download  
-- sklearn=0.22.2
+- sklearn
 see the instruction here: https://scikit-learn.org/stable/install.html  
 
 Optional pacakges if visualization is on:  
@@ -37,7 +37,7 @@ cd POKEMON
 
 ## Example:
 ```bash
-gene=ENST00000373113
+gene=ENSG00000183134
 python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --annotation ${gene}.csq \
                      --cov_file test.cov --cov_list APOE4_dose,APOE2_dose,PC1,PC2 --alpha 0.0 --use_blosum  \
                      --out_file results 
