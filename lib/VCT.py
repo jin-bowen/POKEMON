@@ -13,9 +13,9 @@ class VCT:
 		# add bias term
 		if fixed_covariates is None: self.X = np.ones((self.n, 1), dtype='float32')
 		else:
-			scaler = StandardScaler() 
-			scaler.fit(fixed_covariates)
-			self.X = scaler.transform(fixed_covariates)
+			#scaler = StandardScaler() 
+			#scaler.fit(fixed_covariates)
+			self.X = fixed_covariates
 			self.X = np.hstack([self.X, np.ones((self.n, 1))])
 
 		self.X = self.X.astype('float32')
