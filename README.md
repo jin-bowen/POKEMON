@@ -1,8 +1,8 @@
 # POKEMON
 pokemon is a structure based variance component test for studying rare variants
 
-## Setup
-**Highly recommand to use through docker image**  
+## Installation
+**Use through docker image**  
 dockerhub repo: docker.io/bushlab/pokemon:latest
 ```bash
 dir=/home/myhomespace
@@ -12,7 +12,16 @@ python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype tes
                      --cov_file test.cov --cov_list APOE4_dose,APOE2_dose,PC1,PC2 --alpha 0.0 --use_blosum  \
                      --out_file ${dir}/results --figures --out_fig_dir=${dir}  
 ```
+**Use through pip installation**  
 
+```bash
+pip install --user PokemonAnalysis  
+
+gene=ENSG00000183134     
+run_pokemon --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --annotation ${gene}.csq \
+                     --cov_file test.cov --cov_list APOE4_dose,APOE2_dose,PC1,PC2 --alpha 0.0 --use_blosum  \
+                     --out_file results 
+```
 ## Dependencies
 python > 3.7  
 
@@ -30,18 +39,7 @@ Optional pacakges if visualization is on:
 -  pymol   
 pymol must be installed to use the flag --figures, see instruction here: https://pymol.org/2/  
 
-```bash
-git clone https://github.com/bushlab-genomics/POKEMON.git  
-cd POKEMON 
-```
 
-## Example:
-```bash
-gene=ENSG00000183134
-python run_pokemon.py --gene_name ${gene} --genotype ${gene}.raw --phenotype test.pheno --annotation ${gene}.csq \
-                     --cov_file test.cov --cov_list APOE4_dose,APOE2_dose,PC1,PC2 --alpha 0.0 --use_blosum  \
-                     --out_file results 
-```
 ## Flags:
 **--gene_name**: required  
    A label used as gene name in the output result file 
