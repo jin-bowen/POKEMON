@@ -133,12 +133,13 @@ def map_PDB_structure(vep_mapping):
 		residue = int(row['Protein_position'])
 		try:
 			structure = structure_list.get(entry)
-			resol = structure.header["resolution"]
+			# ensure the expression source
+			org_sys = structure.header['source']['1']['organism_scientific'].replace(' ','').split(',')
+			if len(org_sys) > 1 or org_sys[0] != 'homosapiens': continue 
+
 			atom  = structure[0][chain][residue]["CA"]
 			coord = atom.get_coord()
-			#bfct  = atom.get_bfactor() / (resol*resol)
 			vep_mapping.loc[irow,['x','y','z']] = coord
-			#vep_mapping.loc[irow,'scaled_bfct'] = bfct
 		except: continue
 	out_df = vep_mapping[ori_cols]
 	out_df.columns = new_cols
