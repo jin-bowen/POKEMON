@@ -51,7 +51,7 @@ def main():
 	
 	# default files
 	cwd = os.getcwd()
-	map_to_pdb_file = cwd + '/ref/pdb_chain_uniprot.csv'
+	map_to_pdb_file = cwd + '/ref/pdb_chain_uniprot.csv.gz'
 	pwm_file = cwd + '/ref/blosum62'
 	pwm = pd.read_csv(pwm_file,index_col=0,delim_whitespace=True)
 	
@@ -65,6 +65,7 @@ def main():
 	# no structure mapped 
 	if snps2aa_noidx.empty: 
 		outf.write('%s\tNA\tNA\n'%gene_name)
+		print("no structure mapped")
 		return None
 
 	snps2aa,pdb = filter_snps2aa(snps2aa_noidx, pdb=pdb)
@@ -83,6 +84,7 @@ def main():
 	percent_df = percent(genotype, phenotype, snps2aa_subset)
 	if np.all(percent_df['es']<0.5) or np.all(percent_df['es']>0.5):
 		outf.write('%s\tNA\tNA\n'%gene_name)
+		print("all case or control varaints")
 		return None
 
 	# get distance matrix

@@ -135,6 +135,7 @@ def map_PDB_structure(vep_mapping):
 			structure = structure_list.get(entry)
 			# ensure the expression source
 			org_sys = structure.header['source']['1']['organism_scientific'].replace(' ','').split(',')
+			print(entry,org_sys)
 			if len(org_sys) > 1 or org_sys[0] != 'homosapiens': continue 
 
 			atom  = structure[0][chain][residue]["CA"]
