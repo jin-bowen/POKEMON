@@ -2,7 +2,7 @@ from lib.process import *
 from lib.score import *
 from lib.VCT import *
 import argparse
-import os 
+import os,io 
 
 def main():
 
@@ -52,14 +52,18 @@ def main():
 	# default files
 	cwd = os.getcwd()
 	map_to_pdb_file = cwd + '/ref/pdb_chain_uniprot.csv.gz'
-	pwm_file = cwd + '/ref/blosum62'
-	pwm = pd.read_csv(pwm_file,index_col=0,delim_whitespace=True)
+	map_to_pdb = pd.read_csv(map_to_pdb_file, encoding='utf8',\
+				usecols=range(3),index_col=False,compression='gzip',\
+				comment='#',header=0,names=['structure','chain','SWISSPROT'])
+	
+	pwm_file = cwd + '/ref/blosum62.dat'
+	pwm = pd.read_csv(pwm_file,encoding='utf8',index_col=0,delim_whitespace=True)
 	
 	# generate input file
 	genotype,freqs,phenotype,cov = \
 		parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq_filter)
 	vep = parser_vep(annotation)
-	snps2aa_noidx = snps_to_aa(vep,genotype,map_to_pdb_file,database=database)
+	snps2aa_noidx = snps_to_aa(vep,genotype,map_to_pdb,database=database)
 
 	outf = open(out_file, "a+")
 	# no structure mapped 

@@ -82,11 +82,9 @@ def filter_snps2aa(snps2aa_noidx, pdb='None'):
 
 	return snps2aa,pdb
 
-def snps_to_aa(vep,genotype,map_to_pdb_file,database='pdb'): 
+def snps_to_aa(vep,genotype,map_to_pdb,database='pdb'): 
 
 	snps = set(vep['full_id'].values).intersection(genotype.columns.tolist())
-	map_to_pdb = pd.read_csv(map_to_pdb_file,usecols=range(3),index_col=False,\
-			comment='#',header=0,names=['structure','chain','SWISSPROT'])
 	vep_mapping_processing = vep.loc[vep['full_id'].isin(snps)]
 	vep_mapping_processing.loc[:,'SWISSPROT'] = vep_mapping_processing['SWISSPROT'].str.split('.').str[0]
 	
