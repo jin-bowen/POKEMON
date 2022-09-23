@@ -85,12 +85,7 @@ def main():
 	if snps2aa_subset['varcode'].nunique() < 5:
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
-	percent_df = percent(genotype, phenotype, snps2aa_subset)
-	if np.all(percent_df['es']<0.5) or np.all(percent_df['es']>0.5):
-		outf.write('%s\tNA\tNA\n'%gene_name)
-		print("all case or control varaints")
-		return None
-
+	
 	# get distance matrix
 	distance_mat = cal_distance_mat(snps2aa)
 
