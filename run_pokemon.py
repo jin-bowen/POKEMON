@@ -98,9 +98,6 @@ def main():
 	freq_w, struct_w, combined_w = \
 		weight_mat(freqs.values,distance_mat,aa_weight,use_aa=use_blosum_bool,alpha=float(alpha))
 
-	for lab, ipheno in phenotype.iterrows():
-		ipheno = ipheno.to_frame(lab).T
-
 	if draw_figures: 
 		from lib.cluster import cluster
 		for lab, ipheno in phenotype.iterrows():
