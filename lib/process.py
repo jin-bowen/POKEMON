@@ -133,7 +133,6 @@ def map_PDB_structure(vep_mapping):
 			structure = structure_list.get(entry)
 			# ensure the expression source
 			org_sys = structure.header['source']['1']['organism_scientific'].replace(' ','').split(',')
-			print(entry,org_sys)
 			if len(org_sys) > 1 or org_sys[0] != 'homosapiens': continue 
 
 			atom  = structure[0][chain][residue]["CA"]
@@ -205,23 +204,23 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq):
 		cov_raw = pd.read_csv(cov_file,sep='\s+|\t|,',engine='python',index_col=0)
 		cov_raw.dropna(inplace=True)
 		cov = cov_raw.loc[:,cov_list]
+		cov.index   = cov.index.map(str)
 	else: cov = None
 
 	# process phenotype files
 	phenotype = pd.read_csv(phenotype_file,sep='\s+|\t|,',engine='python',index_col=0)
 	phenotype.dropna(inplace=True)
-	phenotype.index = phenotype.index.map(str)
+	phenotype.index   = phenotype.index.map(str)
 
 	if phenotype.shape[1] < 2: phenotype = phenotype.transpose()
 	phenotype_ind = phenotype.columns.tolist()
-
 	genotype_ind = genotype.index.tolist()
 	individual = set(genotype_ind).intersection(phenotype_ind)
+
 	if cov_file:	
 		cov_ind = cov.index.tolist()
 		individual = set(individual).intersection(cov_ind)
 		cov = cov.loc[individual]
-
 	## calculate freq
 	freqs = genotype.sum(axis=0,skipna=True) 
 	freqs = freqs /(2 * genotype.count())
@@ -240,14 +239,13 @@ def parser_vcf(genotype_file,phenotype_file,cov_file,cov_list,freq):
 
 	genotype_processing.set_index(freqs_df['index'].values, inplace=True)
 	ma_genotype = genotype_processing.T
-
 	ma_freqs = ma_genotype.sum(axis=0,skipna=True) 
 	ma_freqs = ma_freqs /(2 * ma_genotype.count())
 		
 	ma_freqs_subset = ma_freqs[(ma_freqs < freq) & (ma_freqs > 0)]
 	snps = ma_freqs_subset.index.tolist()
-
 	ma_genotype.fillna(0, inplace=True)
+
 	return ma_genotype.loc[individual,snps],ma_freqs[snps],phenotype[individual], cov
 
 if __name__ == "__main__":

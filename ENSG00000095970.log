@@ -1,0 +1,44 @@
+PLINK v2.00a2.3 32-bit (24 Jan 2020)
+Options in effect:
+  --chr 6
+  --export A
+  --from-bp 41126244
+  --id-delim
+  --mac 1
+  --max-maf 0.05
+  --out /mnt/pan/Data14/adsp/adsp_wes_missense/input/ENSG00000095970
+  --remove-fam /mnt/pan/Data14/adsp/adsp_wes_missense/remove.ind
+  --set-all-var-ids @:#:$r:$a
+  --snps-only
+  --to-bp 41130924
+  --vcf /mnt/pan/Data14/adsp/adsp_wes_missense/input/ENSG00000095970.csq
+
+Hostname: compt203
+Working directory: /mnt/pan/Data14/adsp
+Start time: Thu Nov 11 15:56:34 2021
+
+Random number seed: 1636664194
+96295 MiB RAM detected; reserving 2047 MiB for main workspace.
+Using up to 24 threads (change this with --threads).
+--vcf: 56 variants scanned.
+--vcf:
+/mnt/pan/Data14/adsp/adsp_wes_missense/input/ENSG00000095970-temporary.pgen +
+/mnt/pan/Data14/adsp/adsp_wes_missense/input/ENSG00000095970-temporary.pvar +
+/mnt/pan/Data14/adsp/adsp_wes_missense/input/ENSG00000095970-temporary.psam
+written.
+10913 samples (0 females, 0 males, 10913 ambiguous; 10913 founders) loaded from
+/mnt/pan/Data14/adsp/adsp_wes_missense/input/ENSG00000095970-temporary.psam.
+56 variants loaded from
+/mnt/pan/Data14/adsp/adsp_wes_missense/input/ENSG00000095970-temporary.pvar.
+Note: No phenotype data present.
+--remove-fam: 10441 samples remaining.
+10441 samples (0 females, 0 males, 10441 ambiguous; 10441 founders) remaining
+after main filters.
+Calculating allele frequencies... done.
+5 variants removed due to allele frequency threshold(s)
+(--maf/--max-maf/--mac/--max-mac).
+51 variants remaining after main filters.
+--export A: /mnt/pan/Data14/adsp/adsp_wes_missense/input/ENSG00000095970.raw
+written.
+
+End time: Thu Nov 11 15:56:35 2021

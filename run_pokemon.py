@@ -83,6 +83,7 @@ def main():
 	snps_sum = snps_sum.loc[snps_sum>0]
 	snps2aa_subset = snps2aa.merge(snps_sum.to_frame(),left_on='varcode',right_index=True)	
 	if snps2aa_subset['varcode'].nunique() < 5:
+		print("# variance mapped  < 5")
 		outf.write('%s\tNA\tNA\n'%gene_name)
 		return None
 	
@@ -97,12 +98,17 @@ def main():
 	freq_w, struct_w, combined_w = \
 		weight_mat(freqs.values,distance_mat,aa_weight,use_aa=use_blosum_bool,alpha=float(alpha))
 
+	for lab, ipheno in phenotype.iterrows():
+		ipheno = ipheno.to_frame(lab).T
+
 	if draw_figures: 
 		from lib.cluster import cluster
-		out_fig_prefix = figures_dir + '/' + gene_name + '_' + pdb
-		cls = cluster(genotype,snps2aa,phenotype,distance_mat,pdb)
-		cls.plot(out_fig_prefix)
-		cls.plot_cluster(out_fig_prefix)
+		for lab, ipheno in phenotype.iterrows():
+			out_fig_prefix = figures_dir + '/' + gene_name + '_' + lab  +'_' + pdb
+			ipheno = ipheno.to_frame(lab).T
+			cls = cluster(genotype,snps2aa,ipheno,distance_mat,pdb)
+			cls.plot(out_fig_prefix)
+			cls.plot_cluster(out_fig_prefix)
 
 	# calculate kernel based on the score matrix
 	K = cal_Kernel(combined_w, genotype)
@@ -111,7 +117,6 @@ def main():
 	if args.cov_file:	
 		obj = VCT(K, fixed_covariates=cov.values, num_var=m)
 	else: obj = VCT(K, num_var=m)
-
 	for lab, ipheno in phenotype.iterrows():
 		temp = ipheno.values.astype(np.float64)
 		pval = obj.test(temp, acc=1e-8)	
