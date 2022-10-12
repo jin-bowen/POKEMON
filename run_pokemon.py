@@ -103,9 +103,11 @@ def main():
 		for lab, ipheno in phenotype.iterrows():
 			out_fig_prefix = figures_dir + '/' + gene_name + '_' + lab  +'_' + pdb
 			ipheno = ipheno.to_frame(lab).T
-			cls = cluster(genotype,snps2aa,ipheno,distance_mat,pdb)
-			cls.plot(out_fig_prefix)
-			cls.plot_cluster(out_fig_prefix)
+			try:
+				cls = cluster(genotype,snps2aa,ipheno,distance_mat,pdb)
+				cls.plot(out_fig_prefix)
+				cls.plot_cluster(out_fig_prefix)
+			except: continue
 
 	# calculate kernel based on the score matrix
 	K = cal_Kernel(combined_w, genotype)
@@ -114,12 +116,16 @@ def main():
 	if args.cov_file:	
 		obj = VCT(K, fixed_covariates=cov.values, num_var=m)
 	else: obj = VCT(K, num_var=m)
+
 	for lab, ipheno in phenotype.iterrows():
 		temp = ipheno.values.astype(np.float64)
-		pval = obj.test(temp, acc=1e-8)	
-		record = [gene_name, pdb,lab, str(pval)]
-		outf.write('\t'.join(record) + '\n')
-	
+		try: 
+			pval = obj.test(temp, acc=1e-8)	
+			record = [gene_name, pdb,lab, str(pval)]
+			outf.write('\t'.join(record) + '\n')
+		else: continue
+
 if __name__ == "__main__":
 	main()
+
 
