@@ -123,7 +123,7 @@ def main():
 			pval = obj.test(temp, acc=1e-8)	
 			record = [gene_name, pdb,lab, str(pval)]
 			outf.write('\t'.join(record) + '\n')
-		else: continue
+		except: continue
 
 if __name__ == "__main__":
 	main()
