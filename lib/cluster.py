@@ -27,7 +27,7 @@ class cluster:
 		print('#case sub:', np.sum(self.phenotype.values))
 
 	def cluster(self,matrix):
-		clustering = DBSCAN(metric='precomputed',eps=14,min_samples=3)
+		clustering = DBSCAN(metric='precomputed',eps=14,min_samples=5)
 		clustering.fit(matrix)
 		label = clustering.labels_
 		return label

@@ -98,17 +98,6 @@ def main():
 	freq_w, struct_w, combined_w = \
 		weight_mat(freqs.values,distance_mat,aa_weight,use_aa=use_blosum_bool,alpha=float(alpha))
 
-	if draw_figures: 
-		from lib.cluster import cluster
-		for lab, ipheno in phenotype.iterrows():
-			out_fig_prefix = figures_dir + '/' + gene_name + '_' + lab  +'_' + pdb
-			ipheno = ipheno.to_frame(lab).T
-			try:
-				cls = cluster(genotype,snps2aa,ipheno,distance_mat,pdb)
-				cls.plot(out_fig_prefix)
-				cls.plot_cluster(out_fig_prefix)
-			except: continue
-
 	# calculate kernel based on the score matrix
 	K = cal_Kernel(combined_w, genotype)
 	m = genotype.shape[1]
@@ -123,7 +112,18 @@ def main():
 			pval = obj.test(temp, acc=1e-8)	
 			record = [gene_name, pdb,lab, str(pval)]
 			outf.write('\t'.join(record) + '\n')
-		except: continue
+
+			if pval > 0.05/len(phenotype): continue
+			if draw_figures: 
+				from lib.cluster import cluster
+				out_fig_prefix = figures_dir + '/' + gene_name + '_' + lab  +'_' + pdb
+				ipheno = ipheno.to_frame(lab).T
+				try:
+					cls = cluster(genotype,snps2aa,ipheno,distance_mat,pdb)
+					cls.plot(out_fig_prefix)
+					cls.plot_cluster(out_fig_prefix)
+				except: continue
+		else: continue
 
 if __name__ == "__main__":
 	main()
