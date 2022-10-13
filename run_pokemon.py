@@ -123,7 +123,7 @@ def main():
 					cls.plot(out_fig_prefix)
 					cls.plot_cluster(out_fig_prefix)
 				except: continue
-		else: continue
+		except: continue
 
 if __name__ == "__main__":
 	main()
