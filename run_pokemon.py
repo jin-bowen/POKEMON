@@ -108,22 +108,26 @@ def main():
 
 	for lab, ipheno in phenotype.iterrows():
 		temp = ipheno.values.astype(np.float64)
-		try: 
-			pval = obj.test(temp, acc=1e-8)	
-			record = [gene_name, pdb,lab, str(pval)]
-			outf.write('\t'.join(record) + '\n')
+		ipheno_T = ipheno.to_frame(lab).T
+		number_pheno_val = len(unique(temp))
 
-			if pval > 0.05/len(phenotype): continue
-			if draw_figures: 
-				from lib.cluster import cluster
-				out_fig_prefix = figures_dir + '/' + gene_name + '_' + lab  +'_' + pdb
-				ipheno = ipheno.to_frame(lab).T
-				try:
-					cls = cluster(genotype,snps2aa,ipheno,distance_mat,pdb)
-					cls.plot(out_fig_prefix)
-					cls.plot_cluster(out_fig_prefix)
-				except: continue
-		except: continue
+		if (number_pheno_val < 3):
+			percent_df = percent(genotype,ipheno_T,snps2aa)
+
+		if np.all(percent_df['es']<0.5):
+			print("all case or control varaints")
+			continue
+
+		pval = obj.test(temp, acc=1e-8)	
+		record = [gene_name, pdb,lab, str(pval)]
+		outf.write('\t'.join(record) + '\n')
+		if pval > 0.05: continue
+		if draw_figures and (number_pheno_val < 3): 
+			from lib.cluster import cluster
+			out_fig_prefix = figures_dir + '/' + gene_name + '_' + lab  +'_' + pdb
+			cls = cluster(genotype,snps2aa,ipheno_T,distance_mat,pdb)
+			cls.plot(out_fig_prefix)
+			cls.plot_cluster(out_fig_prefix)
 
 if __name__ == "__main__":
 	main()
