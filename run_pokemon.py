@@ -109,7 +109,7 @@ def main():
 	for lab, ipheno in phenotype.iterrows():
 		temp = ipheno.values.astype(np.float64)
 		ipheno_T = ipheno.to_frame(lab).T
-		number_pheno_val = len(unique(temp))
+		number_pheno_val = len(np.unique(temp))
 
 		if (number_pheno_val < 3):
 			percent_df = percent(genotype,ipheno_T,snps2aa)
