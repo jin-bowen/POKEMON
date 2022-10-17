@@ -8,7 +8,7 @@ import pandas as pd
 import pickle
 import sys
 
-class cluster:
+class figure:
 
 	def __init__(self,genotype,snps2aa,phenotype,distance,pdb):
 		self.genotype  = genotype
@@ -21,13 +21,25 @@ class cluster:
 		snps_sum = self.genotype.sum(axis=0)
 		snps_sum = snps_sum[snps_sum>0]
 		snps2aa_subset = self.snps2aa.merge(snps_sum.to_frame(),left_on='varcode',right_index=True)
+		number_pheno_val = len(np.unique(self.phenotype.values.reshape(-1)))
+
+		if number_pheno_val < 3:
+			self.pheno_class = 'bin'
+		else: self.pheno_class = 'cont'
+
 		print('snp:', len(snps_sum))
 		print('mapped snp:',snps2aa_subset.shape[0])
-		print('#sub:', self.phenotype.shape[1])
-		print('#case sub:', np.sum(self.phenotype.values))
+		
+		if self.pheno_class == 'bin':
+			print('#sub:', self.phenotype.shape[1])
+			print('#case sub:', np.sum(self.phenotype.values))
+		elif self.pheno_class == 'cont':
+			print("mean:", np.mean(phenotype.values.reshape(-1)))
+			print("quantile:",np.quantile(phenotype.values.reshape(-1), q=0.25),\
+				np.quantile(phenotype.values.reshape(-1), q=0.75))
 
 	def cluster(self,matrix):
-		clustering = DBSCAN(metric='precomputed',eps=14,min_samples=5)
+		clustering = DBSCAN(metric='precomputed',eps=14,min_samples=3)
 		clustering.fit(matrix)
 		label = clustering.labels_
 		return label
@@ -121,10 +133,11 @@ class cluster:
 		cmd.save('%s_cluster.pse'%outfile)
 
 	def plot(self,outfile):
-		ctrl_id, case_id, snp_df_sub = self.score_on_var()	
-		df = pd.merge(snp_df_sub, self.snps2aa,on='id')
 
-		print(self.pdb)
+		if self.pheno_class == 'bin':	
+			ctrl_id, case_id, snp_df_sub = self.score_on_var()	
+		else: snp_df_sub = self.score_on_var()
+		df = pd.merge(snp_df_sub, self.snps2aa,on='id')
 	
 		#pymol.finish_launching()
 		cmd.reinitialize()
@@ -137,12 +150,17 @@ class cluster:
 		cmd.color('white',self.pdb)
 
 		cmap = mcolors.LinearSegmentedColormap.from_list("", ["tab:blue","white","tab:red"])
-		norm = mcolors.Normalize(vmin=0, vmax=1)
+	
+		if self.pheno_class == 'bin':
+			df['es_norm'] = df['es']
+		elif self.pheno_class == 'cont':
+			df['es_norm'] = (df['es']-df['es'].min())/(df['es'].max()-df['es'].min()) 
 
+		norm = mcolors.Normalize(vmin=0, vmax=1)
 		for i, row in df.iterrows():
 			resi  = row['structure_position']
 			chain = row['chain']
-			pheno = row['es']
+			pheno = row['es_norm']
 			selec = 'snp%s'%i
 			selec_atom = 'snp_atom%s'%i
 
@@ -177,26 +195,11 @@ class cluster:
 		snp_df_sub = snp_df.loc[snp_df['structure']==self.pdb,['id','es']]
 		snp_df_sub.dropna(inplace=True)
 
-		ctrl_id = snp_df_sub.loc[snp_df_sub['es']<=0.5, 'id']
-		case_id = snp_df_sub.loc[snp_df_sub['es']>0.5, 'id']
-		return case_id, ctrl_id, snp_df_sub
-
-def main():
-
-	infile  = sys.argv[1]
-	pdb = sys.argv[2]
-	prefix = infile.split('.')[0]
-
-	with open(infile, 'rb') as f:
-		genotype = pickle.load(f)
-		phenotype = pickle.load(f)
-		snps2aa = pickle.load(f)
-		distance_mat = pickle.load(f)
-
-	outfig = prefix
-	cls1 = cluster(genotype,snps2aa,phenotype,distance_mat,pdb)
-	cls1.plot(outfig)
-	cls1.plot_cluster(outfig)	
+		if self.pheno_class == 'bin':
+			ctrl_id = snp_df_sub.loc[snp_df_sub['es']<=0.5, 'id']
+			case_id = snp_df_sub.loc[snp_df_sub['es']>0.5, 'id']
+			return case_id, ctrl_id, snp_df_sub
+		else: return snp_df_sub
 
 # main body
 if __name__ == "__main__":

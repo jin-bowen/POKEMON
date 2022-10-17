@@ -17,6 +17,7 @@ def percent(genotype, phenotype,snps2aa):
 	percent_df = pd.DataFrame(index=genotype.columns)
 	percent_df.loc[:,'es'] = percent
 	snp_df = pd.merge(percent_df, snps2aa,left_index=True, right_on='varcode')
+	snp_df.dropna(inplace=True)
 	
 	return snp_df
 

@@ -111,23 +111,29 @@ def main():
 		ipheno_T = ipheno.to_frame(lab).T
 		number_pheno_val = len(np.unique(temp))
 
-		if (number_pheno_val < 3):
-			percent_df = percent(genotype,ipheno_T,snps2aa)
-
-		if np.all(percent_df['es']<0.5):
-			print("all case or control varaints")
-			continue
-
-		pval = obj.test(temp, acc=1e-8)	
+		pval = obj.test(temp, acc=1e-8)
 		record = [gene_name, pdb,lab, str(pval)]
 		outf.write('\t'.join(record) + '\n')
+
+		#for binary outcome, no figures output with ctrl variants only
+		if (number_pheno_val < 3):
+			percent_df = percent(genotype,ipheno_T,snps2aa)
+			print(percent_df)
+			print(np.all(percent_df['es']<0.5))
+			if np.all(percent_df['es']<0.5): 
+				print("all case variants")
+				continue
+
+		#for non-sig outcome, no figures output with ctrl variants only
 		if pval > 0.05: continue
-		if draw_figures and (number_pheno_val < 3): 
-			from lib.cluster import cluster
+
+		if draw_figures:
+			from lib.figure import figure
 			out_fig_prefix = figures_dir + '/' + gene_name + '_' + lab  +'_' + pdb
-			cls = cluster(genotype,snps2aa,ipheno_T,distance_mat,pdb)
+			cls = figure(genotype,snps2aa,ipheno_T,distance_mat,pdb)
 			cls.plot(out_fig_prefix)
-			cls.plot_cluster(out_fig_prefix)
+			if (number_pheno_val < 3):
+				cls.plot_cluster(out_fig_prefix)
 
 if __name__ == "__main__":
 	main()
