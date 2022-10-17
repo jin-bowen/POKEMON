@@ -29,9 +29,10 @@ class figure:
 
 		print('snp:', len(snps_sum))
 		print('mapped snp:',snps2aa_subset.shape[0])
+		print('#sub:', self.phenotype.shape[1])
+		print('Protein:',self.pdb)
 		
 		if self.pheno_class == 'bin':
-			print('#sub:', self.phenotype.shape[1])
 			print('#case sub:', np.sum(self.phenotype.values))
 		elif self.pheno_class == 'cont':
 			print("mean:", np.mean(phenotype.values.reshape(-1)))
