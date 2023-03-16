@@ -133,7 +133,5 @@ ${dir_to_vep}/vep -i <vcf file with genotype> --cache --offline --dir <dir to ca
     Directory where POKEMON will write figures to                                                                                         
 
 ### Reference:  
-Jin, B., Capra, J.A., Benchek, P., Wheeler, N., Naj, A.C., Hamilton-Nelson, K.L., Farrell, J.J., Leung, Y.Y., Kunkle, B., Vadarajan, B., et al. (2021). An Association Test of the Spatial Distribution of Rare Missense Variants within Protein Structures Improves Statistical Power of Sequencing Studies. BioRxiv 2021.08.09.455695.    
+Jin B, Capra JA, Benchek P, Wheeler N, Naj AC, Hamilton-Nelson KL, Farrell JJ, Leung YY, Kunkle B, Vadarajan B, et al. 2022. An association test of the spatial distribution of rare missense variants within protein structures identifies Alzheimer’s disease–related patterns. Genome Res 32: 778–790.
 
-### License:  
-MIT   
